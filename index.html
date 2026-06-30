@@ -320,6 +320,14 @@
           <input type="checkbox" id="loja-usa-grade" style="width:auto;margin:0;">
           📐 Habilitar grade de produto (tamanho × cor)
         </label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;margin-top:8px;">
+          <input type="checkbox" id="loja-usa-catalogo" style="width:auto;margin:0;" onchange="document.getElementById('loja-catalogo-whats-wrap').style.display=this.checked?'block':'none'">
+          🛍️ Habilitar catálogo público (vitrine sem login)
+        </label>
+        <div class="form-row" id="loja-catalogo-whats-wrap" style="display:none;margin-top:10px;margin-bottom:0;">
+          <label>WhatsApp para receber pedidos do catálogo</label>
+          <input type="text" id="loja-catalogo-whats" placeholder="(32) 99999-9999">
+        </div>
       </div>
       <div class="form-row">
         <label>Observações</label>
@@ -779,6 +787,9 @@ function abrirModalNovaLoja() {
   document.getElementById('loja-isenta').checked = false;
   document.getElementById('loja-usa-nfce').checked = false;
   document.getElementById('loja-usa-grade').checked = false;
+  document.getElementById('loja-usa-catalogo').checked = false;
+  document.getElementById('loja-catalogo-whats').value = '';
+  document.getElementById('loja-catalogo-whats-wrap').style.display = 'none';
   document.getElementById('loja-obs').value = '';
   document.getElementById('loja-login-master').value = 'admin';
   document.getElementById('loja-senha-master').value = '';
@@ -804,6 +815,9 @@ function abrirModalEditarLoja(id) {
   document.getElementById('loja-isenta').checked = !!loja.isenta;
   document.getElementById('loja-usa-nfce').checked = !!loja.usa_nfce;
   document.getElementById('loja-usa-grade').checked = !!loja.usa_grade;
+  document.getElementById('loja-usa-catalogo').checked = !!loja.usa_catalogo;
+  document.getElementById('loja-catalogo-whats').value = loja.catalogo_whatsapp || '';
+  document.getElementById('loja-catalogo-whats-wrap').style.display = loja.usa_catalogo ? 'block' : 'none';
   document.getElementById('loja-obs').value = loja.observacoes || '';
   preencherVisual(loja);
   trocarAbaModal('dados');
@@ -830,6 +844,8 @@ async function salvarLoja() {
     isenta: document.getElementById('loja-isenta').checked,
     usa_nfce: document.getElementById('loja-usa-nfce').checked,
     usa_grade: document.getElementById('loja-usa-grade').checked,
+    usa_catalogo: document.getElementById('loja-usa-catalogo').checked,
+    catalogo_whatsapp: document.getElementById('loja-catalogo-whats').value.trim(),
     observacoes: document.getElementById('loja-obs').value.trim(),
     logo_base64: document.getElementById('loja-logo-base64').value || null,
     cor_accent: document.getElementById('loja-cor-accent').value,

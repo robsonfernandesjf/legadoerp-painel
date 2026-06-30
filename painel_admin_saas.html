@@ -310,9 +310,44 @@
           🎁 Loja isenta (free / cortesia — não entra nas regras de cobrança/licença)
         </label>
       </div>
+      <div class="form-row" style="border-top:1px solid var(--border);padding-top:14px;">
+        <label style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px;">⚙️ RECURSOS DA LOJA</label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;margin-bottom:8px;">
+          <input type="checkbox" id="loja-usa-nfce" style="width:auto;margin:0;">
+          🧾 Habilitar cadastro fiscal (NFC-e) — NCM, unidade, origem, CSOSN
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;">
+          <input type="checkbox" id="loja-usa-grade" style="width:auto;margin:0;">
+          📐 Habilitar grade de produto (tamanho × cor)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;margin-top:8px;">
+          <input type="checkbox" id="loja-usa-catalogo" style="width:auto;margin:0;" onchange="document.getElementById('loja-catalogo-whats-wrap').style.display=this.checked?'block':'none'">
+          🛍️ Habilitar catálogo público (vitrine sem login)
+        </label>
+        <div class="form-row" id="loja-catalogo-whats-wrap" style="display:none;margin-top:10px;margin-bottom:0;">
+          <label>WhatsApp para receber pedidos do catálogo</label>
+          <input type="text" id="loja-catalogo-whats" placeholder="(32) 99999-9999">
+        </div>
+      </div>
       <div class="form-row">
         <label>Observações</label>
         <textarea id="loja-obs" rows="2" placeholder="Anotações livres..."></textarea>
+      </div>
+
+      <div id="secao-acesso-inicial" style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px;">
+        <p style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:12px;">🔐 ACESSO INICIAL (somente na criação)</p>
+        <div class="form-row">
+          <label>Login do usuário master</label>
+          <input type="text" id="loja-login-master" placeholder="ex: admin">
+        </div>
+        <div class="form-row">
+          <label>Senha do usuário master</label>
+          <input type="text" id="loja-senha-master" placeholder="ex: senha123">
+        </div>
+        <div class="form-row">
+          <label>Licença válida até</label>
+          <input type="date" id="loja-licenca-validade">
+        </div>
       </div>
     </div>
 
@@ -384,7 +419,7 @@
     <h2>📅 Licença — <span id="lic-loja-nome"></span></h2>
     <input type="hidden" id="lic-loja-id">
     <div class="form-row">
-      <label>Válida até (mês/ano)</label>
+      <label>Válida até</label>
       <input type="date" id="lic-validade">
     </div>
     <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">
@@ -750,7 +785,16 @@ function abrirModalNovaLoja() {
   document.getElementById('loja-link').value = '';
   document.getElementById('loja-valor').value = '';
   document.getElementById('loja-isenta').checked = false;
+  document.getElementById('loja-usa-nfce').checked = false;
+  document.getElementById('loja-usa-grade').checked = false;
+  document.getElementById('loja-usa-catalogo').checked = false;
+  document.getElementById('loja-catalogo-whats').value = '';
+  document.getElementById('loja-catalogo-whats-wrap').style.display = 'none';
   document.getElementById('loja-obs').value = '';
+  document.getElementById('loja-login-master').value = 'admin';
+  document.getElementById('loja-senha-master').value = '';
+  document.getElementById('loja-licenca-validade').value = '';
+  document.getElementById('secao-acesso-inicial').style.display = 'block';
   preencherVisual({});
   trocarAbaModal('dados');
   document.getElementById('modal-loja').classList.add('show');
@@ -769,9 +813,15 @@ function abrirModalEditarLoja(id) {
   document.getElementById('loja-link').value = loja.link_vercel || '';
   document.getElementById('loja-valor').value = loja.valor_mensal || '';
   document.getElementById('loja-isenta').checked = !!loja.isenta;
+  document.getElementById('loja-usa-nfce').checked = !!loja.usa_nfce;
+  document.getElementById('loja-usa-grade').checked = !!loja.usa_grade;
+  document.getElementById('loja-usa-catalogo').checked = !!loja.usa_catalogo;
+  document.getElementById('loja-catalogo-whats').value = loja.catalogo_whatsapp || '';
+  document.getElementById('loja-catalogo-whats-wrap').style.display = loja.usa_catalogo ? 'block' : 'none';
   document.getElementById('loja-obs').value = loja.observacoes || '';
   preencherVisual(loja);
   trocarAbaModal('dados');
+  document.getElementById('secao-acesso-inicial').style.display = 'none';
   document.getElementById('modal-loja').classList.add('show');
 }
 
@@ -792,6 +842,10 @@ async function salvarLoja() {
     link_vercel: document.getElementById('loja-link').value.trim(),
     valor_mensal: parseFloat(document.getElementById('loja-valor').value) || 0,
     isenta: document.getElementById('loja-isenta').checked,
+    usa_nfce: document.getElementById('loja-usa-nfce').checked,
+    usa_grade: document.getElementById('loja-usa-grade').checked,
+    usa_catalogo: document.getElementById('loja-usa-catalogo').checked,
+    catalogo_whatsapp: document.getElementById('loja-catalogo-whats').value.trim(),
     observacoes: document.getElementById('loja-obs').value.trim(),
     logo_base64: document.getElementById('loja-logo-base64').value || null,
     cor_accent: document.getElementById('loja-cor-accent').value,
@@ -803,9 +857,39 @@ async function salvarLoja() {
   try {
     if (idOriginal) {
       await sbPatch('lojas', `id=eq.${idOriginal}`, dados);
-
     } else {
+      // 1. Cria a loja
       await sbPost('lojas', dados);
+
+      // 2. Cria usuário master
+      const loginMaster = document.getElementById('loja-login-master').value.trim() || 'admin';
+      const senhaMaster = document.getElementById('loja-senha-master').value.trim() || 'admin123';
+      await sbPost('usuarios', {
+        id: crypto.randomUUID(),
+        nome: dados.responsavel || 'Admin',
+        login: loginMaster,
+        senha: senhaMaster,
+        perfil: 'admin',
+        modulos: JSON.stringify(['dashboard','estoque','vendas','historico','cadastro','relatorios','clientes','vendedores','financeiro']),
+        loja_id: id
+      });
+
+      // 3. Cria licença
+      const validade = document.getElementById('loja-licenca-validade').value || null;
+      await sbPost('licenca', { loja_id: id, validade });
+
+      // 4. Cria taxas de cartão padrão
+      const taxasPadrao = [
+        { loja_id: id, tipo: 'debito',  parcelas: 1, percentual: 1.5 },
+        { loja_id: id, tipo: 'credito', parcelas: 1, percentual: 2.5 },
+        { loja_id: id, tipo: 'credito', parcelas: 2, percentual: 3.0 },
+        { loja_id: id, tipo: 'credito', parcelas: 3, percentual: 3.5 },
+      ];
+      for (const taxa of taxasPadrao) {
+        await sbPost('taxas_cartao', taxa);
+      }
+
+      alert(`✅ Loja "${dados.nome}" criada com sucesso!\n\nAcesso inicial:\nLogin: ${loginMaster}\nSenha: ${senhaMaster}`);
     }
     fecharModal('modal-loja');
     await carregarLojas();
