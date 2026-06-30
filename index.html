@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Admin · Gestão de Lojas SaaS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #F7F8FA;
+    --surface: #FFFFFF;
+    --border: #E5E7EB;
+    --text: #1F2430;
+    --muted: #6B7280;
+    --accent: #5B4FE8;
+    --accent-light: #EEECFD;
+    --success: #16A34A;
+    --success-light: #E7F6EC;
+    --danger: #E0383E;
+    --danger-light: #FDECEC;
+    --warn: #F2994A;
+    --warn-light: #FEF3E7;
+    --info: #2D6FE0;
+    --info-light: #E8F0FD;
+    --shadow: 0 1px 3px rgba(16,24,40,0.06);
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    color: var(--text); padding: 20px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  header h1 { font-size: 19px; font-weight: 700; color: var(--text); }
+  header .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  main { max-width: 1240px; margin: 0 auto; padding: 28px 24px; }
+
+  .toolbar {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .btn {
+    padding: 9px 16px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); cursor: pointer; font-size: 13px; font-weight: 600;
+    color: var(--text); transition: all .15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-primary { background: var(--text); color: #fff; border-color: var(--text); }
+  .btn-primary:hover { opacity: .85; color: #fff; }
+  .btn-danger { color: var(--danger); border-color: var(--danger-light); }
+  .btn-danger:hover { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  input, select, textarea {
+    padding: 9px 13px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 13px; background: var(--surface); color: var(--text); font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+  /* CARDS RESUMO - estilo "Painel do Dono": sólidos e coloridos */
+  .cards-resumo {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px; margin-bottom: 24px;
+  }
+  .card-resumo {
+    border-radius: 14px; padding: 18px 20px; color: #fff;
+    display: flex; flex-direction: column; gap: 2px; min-height: 92px; justify-content: center;
+  }
+  .card-resumo .icon { font-size: 18px; opacity: .9; margin-bottom: 8px; }
+  .card-resumo .value { font-size: 26px; font-weight: 800; line-height: 1; }
+  .card-resumo .label { font-size: 12px; font-weight: 600; opacity: .92; margin-top: 4px; }
+  .card-c1 { background: #4C5FE0; }
+  .card-c2 { background: #F2994A; }
+  .card-c3 { background: #1FAA68; }
+  .card-c4 { background: #E0383E; }
+  .card-c5 { background: #8B5CF6; }
+  .card-c6 { background: #5B4FE8; }
+
+  /* GRÁFICO */
+  .chart-section {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px 22px; margin-bottom: 24px; box-shadow: var(--shadow);
+  }
+  .chart-section h2 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+
+  /* TABELA / LISTA */
+  .section-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; box-shadow: var(--shadow);
+  }
+  .section-card-header {
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px; border-left: 3px solid var(--accent);
+  }
+  .section-card-header h2 { font-size: 15px; font-weight: 700; }
+  .section-card-header .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .3px; padding: 10px 20px;
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    background: #FAFBFC;
+  }
+  tbody td { padding: 14px 20px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #FAFBFC; }
+  .col-nome { font-weight: 600; }
+  .col-email { color: var(--accent); }
+  .row-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+  .badge { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-block; }
+  .badge-ativa { background: var(--success-light); color: var(--success); }
+  .badge-inativa { background: #F1F2F4; color: var(--muted); }
+  .badge-vencendo { background: var(--warn-light); color: var(--warn); }
+  .badge-vencida { background: var(--danger-light); color: var(--danger); }
+  .badge-ok { background: var(--success-light); color: var(--success); }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty .icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* MODAL */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(16,24,40,.5);
+    display: none; align-items: center; justify-content: center; z-index: 999; padding: 20px;
+  }
+  .modal-bg.show { display: flex; }
+  .modal-box {
+    background: var(--surface); border-radius: 16px; max-width: 480px; width: 100%;
+    padding: 28px; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-box.wide { max-width: 540px; }
+  .modal-box h2 { font-size: 17px; margin-bottom: 18px; }
+  .form-row { margin-bottom: 14px; }
+  .form-row label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  .form-row input, .form-row select, .form-row textarea { width: 100%; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  .modal-tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .modal-tab {
+    padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--muted);
+    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .logo-preview {
+    width: 56px; height: 56px; border-radius: 50%; background: var(--accent-light);
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+    overflow: hidden; flex-shrink: 0; border: 1px solid var(--border);
+  }
+  .logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+  .cor-row { display: flex; gap: 8px; align-items: center; }
+  .cor-row input[type="color"] { width: 44px; height: 38px; padding: 2px; cursor: pointer; flex-shrink: 0; }
+  .cor-row input[type="text"] { flex: 1; font-family: monospace; }
+
+  .preview-visual {
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  }
+  .preview-header {
+    padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+    color: #fff; font-size: 13px; transition: background .15s;
+  }
+  .preview-header span { font-size: 18px; }
+  .preview-body { padding: 18px; transition: background .15s; }
+  .preview-btn {
+    border: none; padding: 8px 18px; border-radius: 8px; color: #fff; font-size: 12px;
+    font-weight: 600; cursor: default; transition: background .15s;
+  }
+
+  .login-screen {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; align-items: center; justify-content: center; z-index: 1000;
+  }
+  .login-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 40px 36px; width: 100%; max-width: 360px; text-align: center; box-shadow: var(--shadow);
+  }
+  .login-box h1 { font-size: 18px; margin-bottom: 6px; }
+  .login-box p { font-size: 12px; color: var(--muted); margin-bottom: 22px; }
+  .login-box input { width: 100%; margin-bottom: 14px; }
+  .login-error { color: var(--danger); font-size: 12px; margin-top: 10px; display: none; }
+
+  #loading { text-align: center; padding: 60px; color: var(--muted); font-size: 13px; }
+
+  @media (max-width: 640px) {
+    thead { display: none; }
+    tbody td { display: block; padding: 6px 16px; border-bottom: none; }
+    tbody tr { display: block; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .row-actions { justify-content: flex-start; padding-top: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SIMPLES -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <h1>🔐 Painel Admin</h1>
+    <p>Gestão centralizada de lojas SaaS</p>
+    <input type="password" id="login-senha" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter')fazerLogin()">
+    <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="fazerLogin()">Entrar</button>
+    <div class="login-error" id="login-error">Senha incorreta.</div>
+  </div>
+</div>
+
+<!-- PAINEL PRINCIPAL -->
+<div id="painel" style="display:none;">
+  <header>
+    <div>
+      <h1>Painel do Dono — Gestão de Lojas</h1>
+      <div class="sub">Visão geral de todas as lojas na plataforma</div>
+    </div>
+    <button class="btn btn-sm" onclick="logout()">↩ Sair</button>
+  </header>
+
+  <main>
+    <div id="loading">Carregando lojas...</div>
+
+    <div id="conteudo" style="display:none;">
+
+      <div class="cards-resumo" id="cards-resumo"></div>
+
+      <div class="chart-section">
+        <h2>Novas lojas por mês</h2>
+        <canvas id="chart-novas-lojas" height="90"></canvas>
+      </div>
+
+      <div class="section-card">
+        <div class="section-card-header">
+          <h2 id="titulo-lista-lojas">Lojas cadastradas (0)</h2>
+          <div class="actions">
+            <input type="text" id="busca-loja" placeholder="Buscar por nome ou e-mail..." oninput="renderLojas()" style="min-width:220px;">
+            <select id="filtro-status" onchange="renderLojas()">
+              <option value="">Todos os status</option>
+              <option value="ativa">Ativas</option>
+              <option value="inativa">Inativas</option>
+              <option value="vencida">Licença vencida</option>
+              <option value="isenta">🎁 Isentas (free)</option>
+            </select>
+            <button class="btn" onclick="carregarLojas()">↻ Atualizar</button>
+            <button class="btn btn-primary" onclick="abrirModalNovaLoja()">+ Nova Loja</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Loja</th>
+                <th>Responsável</th>
+                <th>Status</th>
+                <th>Licença</th>
+                <th>Mensalidade</th>
+                <th>Cadastrada em</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="lojas-grid"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- MODAL: Nova/Editar Loja -->
+<div class="modal-bg" id="modal-loja">
+  <div class="modal-box wide">
+    <h2 id="modal-loja-titulo">+ Nova Loja</h2>
+    <input type="hidden" id="loja-id-original">
+
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="trocarAbaModal('dados')" id="tab-dados">📋 Dados</div>
+      <div class="modal-tab" onclick="trocarAbaModal('visual')" id="tab-visual">🎨 Logo &amp; Cores</div>
+    </div>
+
+    <div id="aba-dados">
+      <div class="form-row">
+        <label>ID da loja (único, sem espaços/acentos) *</label>
+        <input type="text" id="loja-id" placeholder="ex: loja-maria-jose">
+      </div>
+      <div class="form-row">
+        <label>Nome da loja *</label>
+        <input type="text" id="loja-nome" placeholder="ex: Loja Maria José" oninput="document.getElementById('preview-nome-loja').textContent = this.value || 'Nome da Loja'">
+      </div>
+      <div class="form-row">
+        <label>Responsável / Contato</label>
+        <input type="text" id="loja-responsavel" placeholder="Nome de quem você fala">
+      </div>
+      <div class="form-row">
+        <label>WhatsApp</label>
+        <input type="text" id="loja-whatsapp" placeholder="(11) 99999-9999">
+      </div>
+      <div class="form-row">
+        <label>Link do Vercel</label>
+        <input type="text" id="loja-link" placeholder="https://loja-xxx.vercel.app">
+      </div>
+      <div class="form-row">
+        <label>Valor mensal (R$)</label>
+        <input type="number" id="loja-valor" step="0.01" placeholder="0.00">
+      </div>
+      <div class="form-row">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;">
+          <input type="checkbox" id="loja-isenta" style="width:auto;margin:0;">
+          🎁 Loja isenta (free / cortesia — não entra nas regras de cobrança/licença)
+        </label>
+      </div>
+      <div class="form-row" style="border-top:1px solid var(--border);padding-top:14px;">
+        <label style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px;">⚙️ RECURSOS DA LOJA</label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;margin-bottom:8px;">
+          <input type="checkbox" id="loja-usa-nfce" style="width:auto;margin:0;">
+          🧾 Habilitar cadastro fiscal (NFC-e) — NCM, unidade, origem, CSOSN
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;">
+          <input type="checkbox" id="loja-usa-grade" style="width:auto;margin:0;">
+          📐 Habilitar grade de produto (tamanho × cor)
+        </label>
+      </div>
+      <div class="form-row">
+        <label>Observações</label>
+        <textarea id="loja-obs" rows="2" placeholder="Anotações livres..."></textarea>
+      </div>
+
+      <div id="secao-acesso-inicial" style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px;">
+        <p style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:12px;">🔐 ACESSO INICIAL (somente na criação)</p>
+        <div class="form-row">
+          <label>Login do usuário master</label>
+          <input type="text" id="loja-login-master" placeholder="ex: admin">
+        </div>
+        <div class="form-row">
+          <label>Senha do usuário master</label>
+          <input type="text" id="loja-senha-master" placeholder="ex: senha123">
+        </div>
+        <div class="form-row">
+          <label>Licença válida até</label>
+          <input type="date" id="loja-licenca-validade">
+        </div>
+      </div>
+    </div>
+
+    <div id="aba-visual" style="display:none;">
+      <div class="form-row">
+        <label>Logo da loja</label>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div id="logo-preview" class="logo-preview">🏪</div>
+          <div style="flex:1;">
+            <input type="file" id="loja-logo-input" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
+            <button type="button" class="btn btn-sm" onclick="document.getElementById('loja-logo-input').click()">📂 Escolher imagem</button>
+            <button type="button" class="btn btn-sm btn-danger" id="btn-remover-logo" style="display:none;" onclick="removerLogo()">Remover</button>
+          </div>
+        </div>
+        <input type="hidden" id="loja-logo-base64">
+        <p style="font-size:11px;color:var(--muted);margin-top:6px;">JPG ou PNG, de preferência quadrada. Convertida automaticamente.</p>
+      </div>
+
+      <div class="form-row">
+        <label>Cor principal (accent)</label>
+        <div class="cor-row">
+          <input type="color" id="loja-cor-accent" value="#B56B7A" oninput="atualizarPreviewCores()">
+          <input type="text" id="loja-cor-accent-hex" value="#B56B7A" oninput="syncCorHex('accent')">
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Cor secundária (accent2)</label>
+        <div class="cor-row">
+          <input type="color" id="loja-cor-accent2" value="#C49A9A" oninput="atualizarPreviewCores()">
+          <input type="text" id="loja-cor-accent2-hex" value="#C49A9A" oninput="syncCorHex('accent2')">
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Cor de fundo (bg)</label>
+        <div class="cor-row">
+          <input type="color" id="loja-cor-bg" value="#FDF8F8" oninput="atualizarPreviewCores()">
+          <input type="text" id="loja-cor-bg-hex" value="#FDF8F8" oninput="syncCorHex('bg')">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Pré-visualização</label>
+        <div id="preview-visual" class="preview-visual">
+          <div class="preview-header" id="preview-header">
+            <span id="preview-logo-mini">🏪</span>
+            <strong id="preview-nome-loja">Nome da Loja</strong>
+          </div>
+          <div class="preview-body" id="preview-body">
+            <button class="preview-btn" id="preview-btn">Botão de exemplo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <button type="button" class="btn btn-sm" onclick="resetarCoresPadrao()">↺ Restaurar cores padrão</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" onclick="fecharModal('modal-loja')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarLoja()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Licença -->
+<div class="modal-bg" id="modal-licenca">
+  <div class="modal-box">
+    <h2>📅 Licença — <span id="lic-loja-nome"></span></h2>
+    <input type="hidden" id="lic-loja-id">
+    <div class="form-row">
+      <label>Válida até</label>
+      <input type="date" id="lic-validade">
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+      Deixe em branco para liberar sem restrição de data.
+    </p>
+    <div class="modal-actions">
+      <button class="btn" onclick="fecharModal('modal-licenca')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarLicencaLoja()">Salvar licença</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Confirmar exclusão -->
+<div class="modal-bg" id="modal-excluir">
+  <div class="modal-box">
+    <h2>⚠️ Excluir loja</h2>
+    <p style="font-size:13px;margin-bottom:8px;">
+      Tem certeza que deseja remover <strong id="excluir-loja-nome"></strong> do painel?
+    </p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:8px;">
+      Isso remove apenas o registro de controle. Os dados da loja (produtos, vendas, etc.)
+      continuam no banco — essa ação não apaga o histórico da loja.
+    </p>
+    <div class="modal-actions">
+      <button class="btn" onclick="fecharModal('modal-excluir')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarExcluirLoja()">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// CONFIGURAÇÃO — mesmo Supabase usado pelas lojas (multi-tenant)
+// =====================================================================
+const SB_URL = 'https://zzqoxpgidalxjxhgyuot.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94cGdpZGFseGp4aGd5dW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NDI0NjIsImV4cCI6MjA5NzIxODQ2Mn0.FX-9C-u4xjDY1CS8vwOhbfIDPMGmHSbQUFpvxmQ9j5M';
+const SB_HEADS = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+// Senha de acesso a este painel (troque para algo só seu)
+const SENHA_ADMIN = 'admin-saas-2026';
+
+// =====================================================================
+// LOGIN SIMPLES (sessionStorage — pede senha de novo a cada sessão)
+// =====================================================================
+function fazerLogin() {
+  const senha = document.getElementById('login-senha').value;
+  if (senha === SENHA_ADMIN) {
+    sessionStorage.setItem('admin_logado', '1');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('painel').style.display = 'block';
+    carregarLojas();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+function logout() {
+  sessionStorage.removeItem('admin_logado');
+  location.reload();
+}
+if (sessionStorage.getItem('admin_logado') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('painel').style.display = 'block';
+}
+
+// =====================================================================
+// API SUPABASE
+// =====================================================================
+async function sbGet(tabela, query = '') {
+  const r = await fetch(`${SB_URL}/rest/v1/${tabela}?${query}`, { headers: SB_HEADS });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPost(tabela, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${tabela}`, { method: 'POST', headers: SB_HEADS, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPatch(tabela, filtro, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${tabela}?${filtro}`, { method: 'PATCH', headers: SB_HEADS, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbDelete(tabela, filtro) {
+  const r = await fetch(`${SB_URL}/rest/v1/${tabela}?${filtro}`, { method: 'DELETE', headers: SB_HEADS });
+  if (!r.ok) throw new Error(await r.text());
+  return true;
+}
+async function sbUpsert(tabela, body, onConflict) {
+  const url = `${SB_URL}/rest/v1/${tabela}${onConflict ? '?on_conflict=' + onConflict : ''}`;
+  const heads = { ...SB_HEADS, 'Prefer': 'resolution=merge-duplicates,return=representation' };
+  const r = await fetch(url, { method: 'POST', headers: heads, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// =====================================================================
+// ESTADO
+// =====================================================================
+let _lojas = [];
+let _licencas = {};
+
+async function carregarLojas() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('conteudo').style.display = 'none';
+  try {
+    const [lojas, licencas] = await Promise.all([
+      sbGet('lojas', 'order=nome.asc'),
+      sbGet('licenca', '')
+    ]);
+    _lojas = lojas;
+    _licencas = {};
+    licencas.forEach(l => { _licencas[l.loja_id] = l; });
+
+    renderResumo();
+    renderLojas();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('conteudo').style.display = 'block';
+  } catch (e) {
+    document.getElementById('loading').innerHTML = `<span style="color:var(--danger)">Erro ao carregar: ${e.message}</span>`;
+  }
+}
+
+function statusLicenca(lojaId) {
+  const lic = _licencas[lojaId];
+  if (!lic || !lic.validade) return { label: 'Sem restrição', classe: 'badge-ok' };
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dataValidade = new Date(lic.validade + 'T00:00:00');
+  const diffDias = Math.ceil((dataValidade - hoje) / 86400000);
+
+  if (diffDias < 0) return { label: 'Vencida em ' + formatarData(lic.validade), classe: 'badge-vencida' };
+  if (diffDias <= 3) return { label: `Vence em ${diffDias === 0 ? 'hoje' : diffDias + ' dia(s)'}`, classe: 'badge-vencendo' };
+  return { label: 'Válida até ' + formatarData(lic.validade), classe: 'badge-ok' };
+}
+
+function formatarData(yyyymmdd) {
+  if (!yyyymmdd) return '—';
+  const [ano, mes, dia] = yyyymmdd.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+let _chartNovasLojas = null;
+
+function renderResumo() {
+  const total = _lojas.length;
+  const ativas = _lojas.filter(l => l.ativa).length;
+  const isentas = _lojas.filter(l => l.isenta).length;
+  // Receita mensal só considera lojas ativas, pagantes e NÃO isentas
+  const totalMensal = _lojas.filter(l => l.ativa && !l.isenta).reduce((s, l) => s + (parseFloat(l.valor_mensal) || 0), 0);
+  const vencidas = _lojas.filter(l => {
+    if (l.isenta) return false; // lojas isentas não entram na regra de licença vencida
+    const st = statusLicenca(l.id);
+    return st.classe === 'badge-vencida';
+  }).length;
+
+  document.getElementById('cards-resumo').innerHTML = `
+    <div class="card-resumo card-c1"><div class="icon">🏪</div><div class="value">${total}</div><div class="label">Lojas totais</div></div>
+    <div class="card-resumo card-c2"><div class="icon">⏳</div><div class="value">${total - ativas}</div><div class="label">Inativas</div></div>
+    <div class="card-resumo card-c3"><div class="icon">✅</div><div class="value">${ativas}</div><div class="label">Ativas</div></div>
+    <div class="card-resumo card-c4"><div class="icon">⚠️</div><div class="value">${vencidas}</div><div class="label">Licenças vencidas</div></div>
+    <div class="card-resumo card-c5"><div class="icon">📈</div><div class="value">R$ ${totalMensal.toFixed(2).replace('.', ',')}</div><div class="label">MRR (receita mensal)</div></div>
+    <div class="card-resumo card-c6"><div class="icon">🎁</div><div class="value">${isentas}</div><div class="label">Lojas isentas (free)</div></div>
+  `;
+
+  renderChartNovasLojas();
+}
+
+function renderChartNovasLojas() {
+  const ctx = document.getElementById('chart-novas-lojas');
+  if (!ctx || typeof Chart === 'undefined') return;
+
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const hoje = new Date();
+  const labels = [];
+  const contagem = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    labels.push(meses[d.getMonth()]);
+    const qtd = _lojas.filter(l => {
+      if (!l.created_at) return false;
+      const c = new Date(l.created_at);
+      return c.getFullYear() === d.getFullYear() && c.getMonth() === d.getMonth();
+    }).length;
+    contagem.push(qtd);
+  }
+
+  if (_chartNovasLojas) _chartNovasLojas.destroy();
+  _chartNovasLojas = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data: contagem, backgroundColor: '#5B4FE8', borderRadius: 4, maxBarThickness: 48 }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#F0F1F3' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderLojas() {
+  const busca = (document.getElementById('busca-loja').value || '').toLowerCase();
+  const filtroStatus = document.getElementById('filtro-status').value;
+  const tbody = document.getElementById('lojas-grid');
+
+  let filtradas = _lojas.filter(l =>
+    l.nome.toLowerCase().includes(busca) ||
+    (l.responsavel || '').toLowerCase().includes(busca) ||
+    l.id.toLowerCase().includes(busca)
+  );
+
+  if (filtroStatus === 'ativa') filtradas = filtradas.filter(l => l.ativa);
+  if (filtroStatus === 'inativa') filtradas = filtradas.filter(l => !l.ativa);
+  if (filtroStatus === 'vencida') filtradas = filtradas.filter(l => !l.isenta && statusLicenca(l.id).classe === 'badge-vencida');
+  if (filtroStatus === 'isenta') filtradas = filtradas.filter(l => l.isenta);
+
+  document.getElementById('titulo-lista-lojas').textContent = `Lojas cadastradas (${filtradas.length})`;
+
+  if (!filtradas.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="icon">🏪</div>Nenhuma loja encontrada.<br>Clique em "+ Nova Loja" para cadastrar a primeira.</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtradas.map(l => {
+    const st = l.isenta ? { label: '🎁 Isenta', classe: 'badge-ok' } : statusLicenca(l.id);
+    const avatarHtml = l.logo_base64
+      ? `<img src="${l.logo_base64}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid var(--border);">`
+      : `<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, ${l.cor_accent||'#5B4FE8'} 0%, ${l.cor_accent2||'#8B5CF6'} 100%);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;flex-shrink:0;">🏪</div>`;
+    const dataCad = l.created_at ? new Date(l.created_at).toLocaleDateString('pt-BR') : '—';
+    return `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${avatarHtml}
+          <div>
+            <div class="col-nome">${l.nome} ${l.isenta ? '<span class="badge badge-ok" style="margin-left:4px;">FREE</span>' : ''}</div>
+            ${l.link_vercel ? `<a href="${l.link_vercel}" target="_blank" class="col-email" style="font-size:11px;text-decoration:none;">🔗 Abrir sistema</a>` : `<span style="font-size:11px;color:var(--muted);">${l.id}</span>`}
+          </div>
+        </div>
+      </td>
+      <td>
+        ${l.responsavel || '—'}
+        ${l.whatsapp ? `<br><span style="font-size:11px;color:var(--muted);">${l.whatsapp}</span>` : ''}
+      </td>
+      <td><span class="badge ${l.ativa ? 'badge-ativa' : 'badge-inativa'}">${l.ativa ? 'Ativa' : 'Inativa'}</span></td>
+      <td><span class="badge ${st.classe}">${st.label}</span></td>
+      <td>${l.isenta ? '<span style="color:var(--muted);">Isenta</span>' : (l.valor_mensal ? 'R$ ' + parseFloat(l.valor_mensal).toFixed(2).replace('.', ',') : '—')}</td>
+      <td>${dataCad}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn btn-sm" onclick="abrirModalLicenca('${l.id}', '${l.nome.replace(/'/g, "\\'")}')">📅</button>
+          <button class="btn btn-sm" onclick="abrirModalEditarLoja('${l.id}')">✏️</button>
+          <button class="btn btn-sm" onclick="toggleAtiva('${l.id}', ${l.ativa})">${l.ativa ? '⏸' : '▶'}</button>
+          <button class="btn btn-sm btn-danger" onclick="abrirModalExcluir('${l.id}', '${l.nome.replace(/'/g, "\\'")}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// =====================================================================
+// MODAIS
+// =====================================================================
+function fecharModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+const CORES_PADRAO = { accent: '#B56B7A', accent2: '#C49A9A', bg: '#FDF8F8' };
+
+function trocarAbaModal(aba) {
+  document.getElementById('aba-dados').style.display = aba === 'dados' ? 'block' : 'none';
+  document.getElementById('aba-visual').style.display = aba === 'visual' ? 'block' : 'none';
+  document.getElementById('tab-dados').classList.toggle('active', aba === 'dados');
+  document.getElementById('tab-visual').classList.toggle('active', aba === 'visual');
+}
+
+function handleLogoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result;
+    document.getElementById('loja-logo-base64').value = base64;
+    document.getElementById('logo-preview').innerHTML = `<img src="${base64}">`;
+    document.getElementById('preview-logo-mini').innerHTML = `<img src="${base64}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;">`;
+    document.getElementById('btn-remover-logo').style.display = 'inline-flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removerLogo() {
+  document.getElementById('loja-logo-base64').value = '';
+  document.getElementById('logo-preview').innerHTML = '🏪';
+  document.getElementById('preview-logo-mini').innerHTML = '🏪';
+  document.getElementById('btn-remover-logo').style.display = 'none';
+  document.getElementById('loja-logo-input').value = '';
+}
+
+function syncCorHex(campo) {
+  const hex = document.getElementById(`loja-cor-${campo}-hex`).value;
+  if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+    document.getElementById(`loja-cor-${campo}`).value = hex;
+    atualizarPreviewCores();
+  }
+}
+
+function atualizarPreviewCores() {
+  const accent = document.getElementById('loja-cor-accent').value;
+  const accent2 = document.getElementById('loja-cor-accent2').value;
+  const bg = document.getElementById('loja-cor-bg').value;
+
+  document.getElementById('loja-cor-accent-hex').value = accent;
+  document.getElementById('loja-cor-accent2-hex').value = accent2;
+  document.getElementById('loja-cor-bg-hex').value = bg;
+
+  document.getElementById('preview-header').style.background = `linear-gradient(135deg, ${accent} 0%, ${accent2} 100%)`;
+  document.getElementById('preview-body').style.background = bg;
+  document.getElementById('preview-btn').style.background = accent;
+}
+
+function resetarCoresPadrao() {
+  document.getElementById('loja-cor-accent').value = CORES_PADRAO.accent;
+  document.getElementById('loja-cor-accent2').value = CORES_PADRAO.accent2;
+  document.getElementById('loja-cor-bg').value = CORES_PADRAO.bg;
+  atualizarPreviewCores();
+}
+
+function preencherVisual(loja) {
+  document.getElementById('loja-logo-base64').value = loja.logo_base64 || '';
+  if (loja.logo_base64) {
+    document.getElementById('logo-preview').innerHTML = `<img src="${loja.logo_base64}">`;
+    document.getElementById('preview-logo-mini').innerHTML = `<img src="${loja.logo_base64}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;">`;
+    document.getElementById('btn-remover-logo').style.display = 'inline-flex';
+  } else {
+    document.getElementById('logo-preview').innerHTML = '🏪';
+    document.getElementById('preview-logo-mini').innerHTML = '🏪';
+    document.getElementById('btn-remover-logo').style.display = 'none';
+  }
+
+  const accent = loja.cor_accent || CORES_PADRAO.accent;
+  const accent2 = loja.cor_accent2 || CORES_PADRAO.accent2;
+  const bg = loja.cor_bg || CORES_PADRAO.bg;
+  document.getElementById('loja-cor-accent').value = accent;
+  document.getElementById('loja-cor-accent2').value = accent2;
+  document.getElementById('loja-cor-bg').value = bg;
+
+  document.getElementById('preview-nome-loja').textContent = loja.nome || 'Nome da Loja';
+  atualizarPreviewCores();
+}
+
+function abrirModalNovaLoja() {
+  document.getElementById('modal-loja-titulo').textContent = '+ Nova Loja';
+  document.getElementById('loja-id-original').value = '';
+  document.getElementById('loja-id').value = '';
+  document.getElementById('loja-id').disabled = false;
+  document.getElementById('loja-nome').value = '';
+  document.getElementById('loja-responsavel').value = '';
+  document.getElementById('loja-whatsapp').value = '';
+  document.getElementById('loja-link').value = '';
+  document.getElementById('loja-valor').value = '';
+  document.getElementById('loja-isenta').checked = false;
+  document.getElementById('loja-usa-nfce').checked = false;
+  document.getElementById('loja-usa-grade').checked = false;
+  document.getElementById('loja-obs').value = '';
+  document.getElementById('loja-login-master').value = 'admin';
+  document.getElementById('loja-senha-master').value = '';
+  document.getElementById('loja-licenca-validade').value = '';
+  document.getElementById('secao-acesso-inicial').style.display = 'block';
+  preencherVisual({});
+  trocarAbaModal('dados');
+  document.getElementById('modal-loja').classList.add('show');
+}
+
+function abrirModalEditarLoja(id) {
+  const loja = _lojas.find(l => l.id === id);
+  if (!loja) return;
+  document.getElementById('modal-loja-titulo').textContent = '✏️ Editar Loja';
+  document.getElementById('loja-id-original').value = loja.id;
+  document.getElementById('loja-id').value = loja.id;
+  document.getElementById('loja-id').disabled = true; // não deixa trocar o ID depois de criado
+  document.getElementById('loja-nome').value = loja.nome || '';
+  document.getElementById('loja-responsavel').value = loja.responsavel || '';
+  document.getElementById('loja-whatsapp').value = loja.whatsapp || '';
+  document.getElementById('loja-link').value = loja.link_vercel || '';
+  document.getElementById('loja-valor').value = loja.valor_mensal || '';
+  document.getElementById('loja-isenta').checked = !!loja.isenta;
+  document.getElementById('loja-usa-nfce').checked = !!loja.usa_nfce;
+  document.getElementById('loja-usa-grade').checked = !!loja.usa_grade;
+  document.getElementById('loja-obs').value = loja.observacoes || '';
+  preencherVisual(loja);
+  trocarAbaModal('dados');
+  document.getElementById('secao-acesso-inicial').style.display = 'none';
+  document.getElementById('modal-loja').classList.add('show');
+}
+
+async function salvarLoja() {
+  const idOriginal = document.getElementById('loja-id-original').value;
+  const id = document.getElementById('loja-id').value.trim().toLowerCase().replace(/\s+/g, '-');
+  const nome = document.getElementById('loja-nome').value.trim();
+
+  if (!id || !nome) {
+    alert('Preencha ao menos o ID e o nome da loja.');
+    return;
+  }
+
+  const dados = {
+    id, nome,
+    responsavel: document.getElementById('loja-responsavel').value.trim(),
+    whatsapp: document.getElementById('loja-whatsapp').value.trim(),
+    link_vercel: document.getElementById('loja-link').value.trim(),
+    valor_mensal: parseFloat(document.getElementById('loja-valor').value) || 0,
+    isenta: document.getElementById('loja-isenta').checked,
+    usa_nfce: document.getElementById('loja-usa-nfce').checked,
+    usa_grade: document.getElementById('loja-usa-grade').checked,
+    observacoes: document.getElementById('loja-obs').value.trim(),
+    logo_base64: document.getElementById('loja-logo-base64').value || null,
+    cor_accent: document.getElementById('loja-cor-accent').value,
+    cor_accent2: document.getElementById('loja-cor-accent2').value,
+    cor_bg: document.getElementById('loja-cor-bg').value,
+    ativa: true
+  };
+
+  try {
+    if (idOriginal) {
+      await sbPatch('lojas', `id=eq.${idOriginal}`, dados);
+    } else {
+      // 1. Cria a loja
+      await sbPost('lojas', dados);
+
+      // 2. Cria usuário master
+      const loginMaster = document.getElementById('loja-login-master').value.trim() || 'admin';
+      const senhaMaster = document.getElementById('loja-senha-master').value.trim() || 'admin123';
+      await sbPost('usuarios', {
+        id: crypto.randomUUID(),
+        nome: dados.responsavel || 'Admin',
+        login: loginMaster,
+        senha: senhaMaster,
+        perfil: 'admin',
+        modulos: JSON.stringify(['dashboard','estoque','vendas','historico','cadastro','relatorios','clientes','vendedores','financeiro']),
+        loja_id: id
+      });
+
+      // 3. Cria licença
+      const validade = document.getElementById('loja-licenca-validade').value || null;
+      await sbPost('licenca', { loja_id: id, validade });
+
+      // 4. Cria taxas de cartão padrão
+      const taxasPadrao = [
+        { loja_id: id, tipo: 'debito',  parcelas: 1, percentual: 1.5 },
+        { loja_id: id, tipo: 'credito', parcelas: 1, percentual: 2.5 },
+        { loja_id: id, tipo: 'credito', parcelas: 2, percentual: 3.0 },
+        { loja_id: id, tipo: 'credito', parcelas: 3, percentual: 3.5 },
+      ];
+      for (const taxa of taxasPadrao) {
+        await sbPost('taxas_cartao', taxa);
+      }
+
+      alert(`✅ Loja "${dados.nome}" criada com sucesso!\n\nAcesso inicial:\nLogin: ${loginMaster}\nSenha: ${senhaMaster}`);
+    }
+    fecharModal('modal-loja');
+    await carregarLojas();
+  } catch (e) {
+    alert('Erro ao salvar: ' + e.message);
+  }
+}
+
+function abrirModalLicenca(lojaId, lojaNome) {
+  document.getElementById('lic-loja-id').value = lojaId;
+  document.getElementById('lic-loja-nome').textContent = lojaNome;
+  const lic = _licencas[lojaId];
+  document.getElementById('lic-validade').value = (lic && lic.validade) || '';
+  document.getElementById('modal-licenca').classList.add('show');
+}
+
+async function salvarLicencaLoja() {
+  const lojaId = document.getElementById('lic-loja-id').value;
+  const validade = document.getElementById('lic-validade').value || null;
+  try {
+    await sbUpsert('licenca', { loja_id: lojaId, validade, updated_at: new Date().toISOString() }, 'loja_id');
+    fecharModal('modal-licenca');
+    await carregarLojas();
+  } catch (e) {
+    alert('Erro ao salvar licença: ' + e.message);
+  }
+}
+
+async function toggleAtiva(id, ativaAtual) {
+  try {
+    await sbPatch('lojas', `id=eq.${id}`, { ativa: !ativaAtual });
+    await carregarLojas();
+  } catch (e) {
+    alert('Erro: ' + e.message);
+  }
+}
+
+let _lojaParaExcluir = null;
+function abrirModalExcluir(id, nome) {
+  _lojaParaExcluir = id;
+  document.getElementById('excluir-loja-nome').textContent = nome;
+  document.getElementById('modal-excluir').classList.add('show');
+}
+async function confirmarExcluirLoja() {
+  if (!_lojaParaExcluir) return;
+  try {
+    await sbDelete('lojas', `id=eq.${_lojaParaExcluir}`);
+    fecharModal('modal-excluir');
+    _lojaParaExcluir = null;
+    await carregarLojas();
+  } catch (e) {
+    alert('Erro ao excluir: ' + e.message);
+  }
+}
+</script>
+
+</body>
+</html>
