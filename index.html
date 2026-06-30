@@ -887,7 +887,9 @@ async function handleBannerCatalogo(event) {
 
   try {
     const blob = await comprimirImagem(file);
-    const lojaId = document.getElementById('loja-id').value.trim().toLowerCase().replace(/\s+/g, '-') || ('loja' + Date.now());
+    const idOriginal = document.getElementById('loja-id-original').value.trim();
+    const idCampo = document.getElementById('loja-id').value.trim();
+    const lojaId = (idOriginal || idCampo || ('loja' + Date.now())).toLowerCase().replace(/\s+/g, '-');
     const nomeArquivo = `${lojaId}/banner-${Date.now()}.jpg`;
 
     statusEl.textContent = 'Enviando banner...';
@@ -896,7 +898,10 @@ async function handleBannerCatalogo(event) {
       headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'image/jpeg' },
       body: blob
     });
-    if (!resp.ok) throw new Error('Falha no upload (status ' + resp.status + ').');
+    if (!resp.ok) {
+      const corpoErro = await resp.text().catch(() => '');
+      throw new Error(`Falha no upload (status ${resp.status}). ${corpoErro}`);
+    }
 
     const urlPublica = `${SB_URL}/storage/v1/object/public/produtos/${nomeArquivo}`;
     document.getElementById('loja-banner-url').value = urlPublica;
@@ -908,7 +913,7 @@ async function handleBannerCatalogo(event) {
   } catch (e) {
     console.error('Erro ao processar/enviar banner:', e);
     statusEl.style.color = 'var(--danger)';
-    statusEl.textContent = '⚠ Erro ao enviar o banner. Tente novamente.';
+    statusEl.textContent = '⚠ ' + (e.message || 'Erro ao enviar o banner. Tente novamente.');
   }
 }
 
