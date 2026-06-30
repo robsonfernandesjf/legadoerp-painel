@@ -327,6 +327,20 @@
         <div class="form-row" id="loja-catalogo-whats-wrap" style="display:none;margin-top:10px;margin-bottom:0;">
           <label>WhatsApp para receber pedidos do catálogo</label>
           <input type="text" id="loja-catalogo-whats" placeholder="(32) 99999-9999">
+          <div style="margin-top:12px;">
+            <label>Banner do catálogo (topo da vitrine, opcional)</label>
+            <input type="file" id="loja-banner-input" accept="image/*" style="display:none;" onchange="handleBannerCatalogo(event)">
+            <div style="display:flex;gap:12px;align-items:center;">
+              <div id="loja-banner-preview" style="width:120px;height:60px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                <span style="font-size:20px;opacity:0.3;">🖼️</span>
+              </div>
+              <div>
+                <button type="button" class="btn" style="font-size:12px;padding:6px 12px;" onclick="document.getElementById('loja-banner-input').click()">📷 Escolher banner</button>
+                <p id="loja-banner-status" style="font-size:11px;color:var(--muted);margin-top:6px;"></p>
+              </div>
+            </div>
+            <input type="hidden" id="loja-banner-url">
+          </div>
         </div>
       </div>
       <div class="form-row">
@@ -790,6 +804,9 @@ function abrirModalNovaLoja() {
   document.getElementById('loja-usa-catalogo').checked = false;
   document.getElementById('loja-catalogo-whats').value = '';
   document.getElementById('loja-catalogo-whats-wrap').style.display = 'none';
+  document.getElementById('loja-banner-url').value = '';
+  document.getElementById('loja-banner-preview').innerHTML = '<span style="font-size:20px;opacity:0.3;">🖼️</span>';
+  document.getElementById('loja-banner-status').textContent = '';
   document.getElementById('loja-obs').value = '';
   document.getElementById('loja-login-master').value = 'admin';
   document.getElementById('loja-senha-master').value = '';
@@ -818,11 +835,81 @@ function abrirModalEditarLoja(id) {
   document.getElementById('loja-usa-catalogo').checked = !!loja.usa_catalogo;
   document.getElementById('loja-catalogo-whats').value = loja.catalogo_whatsapp || '';
   document.getElementById('loja-catalogo-whats-wrap').style.display = loja.usa_catalogo ? 'block' : 'none';
+  document.getElementById('loja-banner-url').value = loja.catalogo_banner_url || '';
+  document.getElementById('loja-banner-preview').innerHTML = loja.catalogo_banner_url
+    ? `<img src="${loja.catalogo_banner_url}" style="width:100%;height:100%;object-fit:cover;">`
+    : '<span style="font-size:20px;opacity:0.3;">🖼️</span>';
+  document.getElementById('loja-banner-status').textContent = '';
   document.getElementById('loja-obs').value = loja.observacoes || '';
   preencherVisual(loja);
   trocarAbaModal('dados');
   document.getElementById('secao-acesso-inicial').style.display = 'none';
   document.getElementById('modal-loja').classList.add('show');
+}
+
+// ===== BANNER DO CATÁLOGO: redimensiona + comprime + upload =====
+function comprimirImagem(file, maxLargura = 1200, qualidade = 0.8) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxLargura) {
+          height = Math.round(height * (maxLargura / width));
+          width = maxLargura;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => {
+          if (!blob) { reject(new Error('Falha ao processar a imagem.')); return; }
+          resolve(blob);
+        }, 'image/jpeg', qualidade);
+      };
+      img.onerror = () => reject(new Error('Não foi possível ler a imagem.'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Falha ao ler o arquivo.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleBannerCatalogo(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('loja-banner-status');
+  const previewEl = document.getElementById('loja-banner-preview');
+  statusEl.textContent = 'Otimizando imagem...';
+  statusEl.style.color = 'var(--muted)';
+
+  try {
+    const blob = await comprimirImagem(file);
+    const lojaId = document.getElementById('loja-id').value.trim().toLowerCase().replace(/\s+/g, '-') || ('loja' + Date.now());
+    const nomeArquivo = `${lojaId}/banner-${Date.now()}.jpg`;
+
+    statusEl.textContent = 'Enviando banner...';
+    const resp = await fetch(`${SB_URL}/storage/v1/object/produtos/${nomeArquivo}`, {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'image/jpeg' },
+      body: blob
+    });
+    if (!resp.ok) throw new Error('Falha no upload (status ' + resp.status + ').');
+
+    const urlPublica = `${SB_URL}/storage/v1/object/public/produtos/${nomeArquivo}`;
+    document.getElementById('loja-banner-url').value = urlPublica;
+
+    previewEl.innerHTML = `<img src="${urlPublica}" style="width:100%;height:100%;object-fit:cover;">`;
+    const kb = Math.round(blob.size / 1024);
+    statusEl.style.color = 'var(--success)';
+    statusEl.textContent = `✓ Banner otimizado: ${kb} KB`;
+  } catch (e) {
+    console.error('Erro ao processar/enviar banner:', e);
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = '⚠ Erro ao enviar o banner. Tente novamente.';
+  }
 }
 
 async function salvarLoja() {
@@ -846,6 +933,7 @@ async function salvarLoja() {
     usa_grade: document.getElementById('loja-usa-grade').checked,
     usa_catalogo: document.getElementById('loja-usa-catalogo').checked,
     catalogo_whatsapp: document.getElementById('loja-catalogo-whats').value.trim(),
+    catalogo_banner_url: document.getElementById('loja-banner-url').value || null,
     observacoes: document.getElementById('loja-obs').value.trim(),
     logo_base64: document.getElementById('loja-logo-base64').value || null,
     cor_accent: document.getElementById('loja-cor-accent').value,
