@@ -1030,10 +1030,10 @@ async function salvarLoja() {
 
       // 4. Cria taxas de cartão padrão
       const taxasPadrao = [
-        { loja_id: id, tipo: 'debito',  parcelas: 1, percentual: 1.5 },
-        { loja_id: id, tipo: 'credito', parcelas: 1, percentual: 2.5 },
-        { loja_id: id, tipo: 'credito', parcelas: 2, percentual: 3.0 },
-        { loja_id: id, tipo: 'credito', parcelas: 3, percentual: 3.5 },
+        { loja_id: id, tipo: 'Cartão débito',  parcelas: 1, percentual: 1.5 },
+        { loja_id: id, tipo: 'Cartão crédito', parcelas: 1, percentual: 2.5 },
+        { loja_id: id, tipo: 'Cartão crédito', parcelas: 2, percentual: 3.0 },
+        { loja_id: id, tipo: 'Cartão crédito', parcelas: 3, percentual: 3.5 },
       ];
       for (const taxa of taxasPadrao) {
         await sbPost('taxas_cartao', taxa);
@@ -1199,6 +1199,9 @@ async function importarTabela(tipo) {
   btn.disabled=true;btn.textContent='Importando...';
   var total=0,erros=0,LOTE=100;
   for(var i=0;i<rows.length;i+=LOTE){
+    // Mantém o código como veio no CSV (com pontuação, ex.: "6104.44.00" / "20.027.00"),
+    // pois é o padrão oficial (Convênio 92/2015 p/ CEST, TIPI p/ NCM). O cadastro de
+    // produto aplica a mesma máscara ao digitar, então os valores batem exatamente.
     var lote=rows.slice(i,i+LOTE).map(function(row){var obj={};cfg.colunas.forEach(function(col){obj[col]=row[col]||null;});return obj;});
     try{await sbUpsert(cfg.tabela,lote,cfg.conflito);total+=lote.length;statusEl.textContent='Importando... '+total+'/'+rows.length;}
     catch(e){erros+=lote.length;console.error(e);}
