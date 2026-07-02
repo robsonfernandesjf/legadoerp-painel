@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel Admin · Gestão de Lojas SaaS</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
 <style>
   :root {
     --bg: #F7F8FA;
@@ -513,6 +514,13 @@ const SB_HEADS = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Conte
 // Senha de acesso a este painel (troque para algo só seu)
 const SENHA_ADMIN = 'admin-saas-2026';
 
+function gerarSenhaAleatoria() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let s = '';
+  for (let i = 0; i < 10; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
 // =====================================================================
 // LOGIN SIMPLES (sessionStorage — pede senha de novo a cada sessão)
 // =====================================================================
@@ -991,14 +999,14 @@ async function salvarLoja() {
       // 1. Cria a loja
       await sbPost('lojas', dados);
 
-      // 2. Cria usuário master
+      // 2. Cria usuário master com senha aleatória (nunca hardcoded)
       const loginMaster = 'admin';
-      const senhaMaster = 'admin123';
+      const senhaMaster = gerarSenhaAleatoria();
       await sbPost('usuarios', {
         id: crypto.randomUUID(),
         nome: dados.responsavel || 'Admin',
         login: loginMaster,
-        senha: senhaMaster,
+        senha: dcodeIO.bcrypt.hashSync(senhaMaster, 10),
         perfil: 'admin',
         modulos: JSON.stringify(['dashboard','estoque','vendas','historico','cadastro','relatorios','clientes','vendedores','financeiro']),
         loja_id: id
