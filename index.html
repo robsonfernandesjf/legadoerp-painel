@@ -1073,6 +1073,7 @@ async function confirmarExcluirLoja() {
   } catch (e) {
     alert('Erro ao excluir: ' + e.message);
   }
+}
 
 // ══ TABELAS FISCAIS ══════════════════════════════════════
 const FISCAL_CONFIG = {
@@ -1162,7 +1163,7 @@ async function carregarPreviewCST() {
     document.getElementById('preview-cst').innerHTML=html;
   }catch(e){statusEl.style.color='var(--danger)';statusEl.textContent='❌ Tabela não encontrada. Execute o SQL de criação primeiro.';}
 }
-}
+
 </script>
 
 </body>
