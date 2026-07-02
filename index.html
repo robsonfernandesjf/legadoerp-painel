@@ -525,6 +525,9 @@ const SB_HEADS = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Conte
 
 // Senha de acesso a este painel (troque para algo só seu)
 const SENHA_ADMIN = 'admin-saas-2026';
+// Nome real gerado pelo Supabase ao fazer deploy pelo editor web (ajuste se vier diferente).
+const EDGE_ADMIN_URL = `${SB_URL}/functions/v1/swift-worker`;
+let _senhaAdminSessao = '';
 
 function gerarSenhaAleatoria() {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
@@ -540,6 +543,8 @@ function fazerLogin() {
   const senha = document.getElementById('login-senha').value;
   if (senha === SENHA_ADMIN) {
     sessionStorage.setItem('admin_logado', '1');
+    sessionStorage.setItem('admin_senha', senha);
+    _senhaAdminSessao = senha;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('painel').style.display = 'block';
     carregarLojas();
@@ -549,11 +554,25 @@ function fazerLogin() {
 }
 function logout() {
   sessionStorage.removeItem('admin_logado');
+  sessionStorage.removeItem('admin_senha');
   location.reload();
 }
 if (sessionStorage.getItem('admin_logado') === '1') {
+  _senhaAdminSessao = sessionStorage.getItem('admin_senha') || '';
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('painel').style.display = 'block';
+}
+
+// Helper para chamar a Edge Function do painel (criar/excluir loja, licenças)
+async function chamarAdminFn(acao, extra) {
+  const resp = await fetch(EDGE_ADMIN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
+    body: JSON.stringify({ acao, senha_admin: _senhaAdminSessao, ...extra })
+  });
+  const corpo = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(corpo.error || 'Erro na operação.');
+  return corpo;
 }
 
 // =====================================================================
@@ -597,13 +616,13 @@ async function carregarLojas() {
   document.getElementById('loading').style.display = 'block';
   document.getElementById('conteudo').style.display = 'none';
   try {
-    const [lojas, licencas] = await Promise.all([
+    const [lojas, licResp] = await Promise.all([
       sbGet('lojas', 'order=nome.asc'),
-      sbGet('licenca', '')
+      chamarAdminFn('listar_licencas', {})
     ]);
     _lojas = lojas;
     _licencas = {};
-    licencas.forEach(l => { _licencas[l.loja_id] = l; });
+    (licResp.licencas || []).forEach(l => { _licencas[l.loja_id] = l; });
 
     renderResumo();
     renderLojas();
@@ -1008,38 +1027,9 @@ async function salvarLoja() {
     if (idOriginal) {
       await sbPatch('lojas', `id=eq.${idOriginal}`, dados);
     } else {
-      // 1. Cria a loja
-      await sbPost('lojas', dados);
-
-      // 2. Cria usuário master com senha aleatória (nunca hardcoded)
-      const loginMaster = 'admin';
-      const senhaMaster = gerarSenhaAleatoria();
-      await sbPost('usuarios', {
-        id: crypto.randomUUID(),
-        nome: dados.responsavel || 'Admin',
-        login: loginMaster,
-        senha: dcodeIO.bcrypt.hashSync(senhaMaster, 10),
-        perfil: 'admin',
-        modulos: JSON.stringify(['dashboard','estoque','vendas','historico','cadastro','relatorios','clientes','vendedores','financeiro']),
-        loja_id: id
-      });
-
-      // 3. Cria licença
       const validade = document.getElementById('loja-licenca-validade').value || null;
-      await sbPost('licenca', { loja_id: id, validade });
-
-      // 4. Cria taxas de cartão padrão
-      const taxasPadrao = [
-        { loja_id: id, tipo: 'Cartão débito',  parcelas: 1, percentual: 1.5 },
-        { loja_id: id, tipo: 'Cartão crédito', parcelas: 1, percentual: 2.5 },
-        { loja_id: id, tipo: 'Cartão crédito', parcelas: 2, percentual: 3.0 },
-        { loja_id: id, tipo: 'Cartão crédito', parcelas: 3, percentual: 3.5 },
-      ];
-      for (const taxa of taxasPadrao) {
-        await sbPost('taxas_cartao', taxa);
-      }
-
-      alert(`✅ Loja "${dados.nome}" criada com sucesso!\n\nAcesso inicial:\nLogin: ${loginMaster}\nSenha: ${senhaMaster}`);
+      const resp = await chamarAdminFn('criar_loja', { dados, licenca_validade: validade });
+      alert(`✅ Loja "${dados.nome}" criada com sucesso!\n\nAcesso inicial:\nLogin: ${resp.loginMaster}\nSenha: ${resp.senhaMaster}`);
     }
     fecharModal('modal-loja');
     await carregarLojas();
@@ -1060,7 +1050,7 @@ async function salvarLicencaLoja() {
   const lojaId = document.getElementById('lic-loja-id').value;
   const validade = document.getElementById('lic-validade').value || null;
   try {
-    await sbUpsert('licenca', { loja_id: lojaId, validade, updated_at: new Date().toISOString() }, 'loja_id');
+    await chamarAdminFn('salvar_licenca', { loja_id: lojaId, validade });
     fecharModal('modal-licenca');
     await carregarLojas();
   } catch (e) {
@@ -1086,7 +1076,7 @@ function abrirModalExcluir(id, nome) {
 async function confirmarExcluirLoja() {
   if (!_lojaParaExcluir) return;
   try {
-    await sbDelete('lojas', `id=eq.${_lojaParaExcluir}`);
+    await chamarAdminFn('excluir_loja', { loja_id: _lojaParaExcluir });
     fecharModal('modal-excluir');
     _lojaParaExcluir = null;
     await carregarLojas();
