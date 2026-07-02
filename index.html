@@ -272,11 +272,23 @@
           <div class="actions"><span style="font-size:12px;color:var(--muted);">Globais — disponíveis para todas as lojas com módulo fiscal ativo</span></div>
         </div>
         <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px;">
-          <button class="btn btn-sm" id="tab-fiscal-cest" onclick="trocarAbaFiscal('cest')" style="border-radius:6px 6px 0 0;border-bottom:2px solid var(--accent);">CEST</button>
+          <button class="btn btn-sm" id="tab-fiscal-ncm" onclick="trocarAbaFiscal('ncm')" style="border-radius:6px 6px 0 0;border-bottom:2px solid var(--accent);">NCM</button>
+          <button class="btn btn-sm" id="tab-fiscal-cest" onclick="trocarAbaFiscal('cest')" style="border-radius:6px 6px 0 0;opacity:.6;border-bottom:2px solid transparent;">CEST</button>
           <button class="btn btn-sm" id="tab-fiscal-cfop" onclick="trocarAbaFiscal('cfop')" style="border-radius:6px 6px 0 0;opacity:.6;border-bottom:2px solid transparent;">CFOP</button>
           <button class="btn btn-sm" id="tab-fiscal-cst"  onclick="trocarAbaFiscal('cst')"  style="border-radius:6px 6px 0 0;opacity:.6;border-bottom:2px solid transparent;">CST PIS/COFINS</button>
         </div>
-        <div id="aba-fiscal-cest">
+        <div id="aba-fiscal-ncm">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Nomenclatura Comum do Mercosul.<br><strong>Colunas:</strong> <code>codigo, descricao</code>. O botão abaixo já baixa um CSV pronto com os NCM mais usados em moda/vestuário para importar direto — pode complementar depois com outros códigos.</p>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="btn btn-sm btn-outline" onclick="baixarModeloCSV('ncm')">⬇ Baixar CSV de NCM (moda/vestuário)</button>
+            <label class="btn btn-sm btn-primary" style="cursor:pointer;margin:0;">📂 Selecionar CSV<input type="file" id="file-ncm" accept=".csv" style="display:none;" onchange="previewCSV('ncm')"></label>
+            <button class="btn btn-sm btn-primary" id="btn-importar-ncm" style="display:none;" onclick="importarTabela('ncm')">✅ Confirmar importação</button>
+            <span id="status-ncm" style="font-size:12px;color:var(--muted);"></span>
+          </div>
+          <div id="preview-ncm" style="max-height:220px;overflow-y:auto;"></div>
+          <div id="stats-ncm" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+        </div>
+        <div id="aba-fiscal-cest" style="display:none;">
           <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Código Especificador da Substituição Tributária (Convênio ICMS 92/2015).<br><strong>Colunas:</strong> <code>codigo, descricao, ncm</code></p>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
             <button class="btn btn-sm btn-outline" onclick="baixarModeloCSV('cest')">⬇ Modelo CSV</button>
@@ -1085,13 +1097,56 @@ async function confirmarExcluirLoja() {
 
 // ══ TABELAS FISCAIS ══════════════════════════════════════
 const FISCAL_CONFIG = {
+  ncm: { tabela:'tab_ncm', colunas:['codigo','descricao'], conflito:'codigo', headers:['Código','Descrição'],
+    exemplo:['codigo,descricao',
+      '6109.10.00,Camisetas de malha de algodão',
+      '6106.10.00,Camisas/blusas de malha de algodão (feminino)',
+      '6104.42.00,Vestidos de malha de algodão',
+      '6104.43.00,Vestidos de malha de fibras sintéticas',
+      '6104.44.00,Vestidos de malha de fibras artificiais',
+      '6104.52.00,Saias de malha de algodão',
+      '6104.53.00,Saias de malha de fibras sintéticas',
+      '6104.62.00,Calças de malha de algodão (feminino)',
+      '6104.63.00,Calças de malha de fibras sintéticas (feminino)',
+      '6110.20.00,Suéteres/pulôveres de malha de algodão',
+      '6110.30.00,Suéteres de malha de fibras sintéticas ou artificiais',
+      '6102.30.00,Casacos femininos de malha de fibras sintéticas/artificiais',
+      '6204.42.00,Vestidos de tecido plano de algodão',
+      '6204.43.00,Vestidos de tecido plano de fibras sintéticas',
+      '6204.44.00,Vestidos de tecido plano de fibras artificiais',
+      '6204.52.00,Saias de tecido plano de algodão',
+      '6204.62.00,Calças de tecido plano de algodão (feminino)',
+      '6204.63.00,Calças de tecido plano de fibras sintéticas (feminino)',
+      '6206.30.00,Camisas/blusas de tecido plano de algodão (feminino)',
+      '6206.40.00,Camisas/blusas de tecido plano de fibras sintéticas/artificiais',
+      '6211.42.00,Macacões e conjuntos femininos de algodão',
+      '6211.43.00,Macacões e conjuntos femininos de fibras sintéticas',
+      '6212.10.00,Sutiãs',
+      '6108.21.00,Calcinhas de malha de algodão',
+      '6108.22.00,Calcinhas de malha de fibras sintéticas/artificiais',
+      '6108.91.00,Roupões e roupas de banho de malha de algodão',
+      '6115.10.00,Meias-calças e meias de compressão',
+      '6115.21.00,Meias de malha de fibras sintéticas',
+      '6112.41.00,Maiôs e biquínis de fibras sintéticas',
+      '6117.10.00,Xales, echarpes, lenços e artigos semelhantes',
+      '6505.00.00,Chapéus e outros artefatos de uso semelhante, de malha',
+      '6217.10.00,Outros acessórios de vestuário confeccionados',
+      '4202.22.00,Bolsas de matérias têxteis ou plástico',
+      '4202.31.00,Carteiras de couro ou couro reconstituído',
+      '4203.30.00,Cintos e cinturões de couro',
+      '7117.19.00,Bijuterias de metais comuns',
+      '7117.90.00,Outras bijuterias',
+      '9004.10.00,Óculos de sol',
+      '6403.99.00,Calçados com sola de borracha/plástico e parte superior de couro',
+      '6404.19.00,Calçados com sola de borracha/plástico e parte superior têxtil'
+    ] },
   cest: { tabela:'tab_cest', colunas:['codigo','descricao','ncm'], conflito:'codigo', headers:['Código','Descrição','NCM'],
     exemplo:['codigo,descricao,ncm','2800700,Vestuário de malha - camiseta,6109.10.00','2800800,Calças de malha,6103.42.00','2801600,Meias-calças,6115.10.00'] },
   cfop: { tabela:'tab_cfop', colunas:['codigo','descricao','tipo'], conflito:'codigo', headers:['Código','Descrição','Tipo'],
     exemplo:['codigo,descricao,tipo','5102,Venda dentro do estado,saida','5405,Venda com ST dentro do estado,saida','6102,Venda fora do estado,saida','1102,Compra para comercialização,entrada'] }
 };
 function trocarAbaFiscal(aba) {
-  ['cest','cfop','cst'].forEach(function(a) {
+  ['ncm','cest','cfop','cst'].forEach(function(a) {
     var el=document.getElementById('aba-fiscal-'+a), tab=document.getElementById('tab-fiscal-'+a);
     if(el) el.style.display=a===aba?'block':'none';
     if(tab){tab.style.opacity=a===aba?'1':'0.6';tab.style.borderBottom=a===aba?'2px solid var(--accent)':'2px solid transparent';}
