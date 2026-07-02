@@ -264,6 +264,73 @@
         </div>
       </div>
 
+      <!-- ══ TABELAS FISCAIS ══ -->
+      <div class="section-card" style="margin-top:24px;">
+        <div class="section-card-header">
+          <h2>🧾 Tabelas Fiscais (NF-e / NFC-e)</h2>
+          <div class="actions">
+            <span style="font-size:12px;color:var(--muted);">Globais — disponíveis para todas as lojas com módulo fiscal ativo</span>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px;">
+          <button class="btn btn-sm" id="tab-fiscal-cest"   onclick="trocarAbaFiscal('cest')"   style="border-radius:6px 6px 0 0;border-bottom:2px solid var(--accent);">CEST</button>
+          <button class="btn btn-sm" id="tab-fiscal-cfop"   onclick="trocarAbaFiscal('cfop')"   style="border-radius:6px 6px 0 0;opacity:.6;">CFOP</button>
+          <button class="btn btn-sm" id="tab-fiscal-cst"    onclick="trocarAbaFiscal('cst')"    style="border-radius:6px 6px 0 0;opacity:.6;">CST PIS/COFINS</button>
+        </div>
+
+        <!-- ABA CEST -->
+        <div id="aba-fiscal-cest">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">
+            Código Especificador da Substituição Tributária. Importe o arquivo CSV oficial do CONFAZ.<br>
+            <strong>Colunas esperadas:</strong> <code>codigo, descricao, ncm</code>
+          </p>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="btn btn-sm btn-outline" onclick="baixarModeloCSV('cest')">⬇ Modelo CSV</button>
+            <label class="btn btn-sm btn-primary" style="cursor:pointer;margin:0;">
+              📂 Selecionar CSV
+              <input type="file" id="file-cest" accept=".csv" style="display:none;" onchange="previewCSV('cest')">
+            </label>
+            <button class="btn btn-sm btn-primary" id="btn-importar-cest" style="display:none;" onclick="importarTabela('cest')">✅ Confirmar importação</button>
+            <span id="status-cest" style="font-size:12px;color:var(--muted);"></span>
+          </div>
+          <div id="preview-cest" style="max-height:220px;overflow-y:auto;"></div>
+          <div id="stats-cest" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+        </div>
+
+        <!-- ABA CFOP -->
+        <div id="aba-fiscal-cfop" style="display:none;">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">
+            Código Fiscal de Operações e Prestações. Importe o arquivo CSV da tabela SPED.<br>
+            <strong>Colunas esperadas:</strong> <code>codigo, descricao, tipo</code> &nbsp;(tipo: <em>entrada</em> ou <em>saida</em>)
+          </p>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="btn btn-sm btn-outline" onclick="baixarModeloCSV('cfop')">⬇ Modelo CSV</button>
+            <label class="btn btn-sm btn-primary" style="cursor:pointer;margin:0;">
+              📂 Selecionar CSV
+              <input type="file" id="file-cfop" accept=".csv" style="display:none;" onchange="previewCSV('cfop')">
+            </label>
+            <button class="btn btn-sm btn-primary" id="btn-importar-cfop" style="display:none;" onclick="importarTabela('cfop')">✅ Confirmar importação</button>
+            <span id="status-cfop" style="font-size:12px;color:var(--muted);"></span>
+          </div>
+          <div id="preview-cfop" style="max-height:220px;overflow-y:auto;"></div>
+          <div id="stats-cfop" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+        </div>
+
+        <!-- ABA CST PIS/COFINS -->
+        <div id="aba-fiscal-cst" style="display:none;">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">
+            Tabela oficial já populada via SQL. Use o botão abaixo para verificar ou reimportar se necessário.
+          </p>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="btn btn-sm btn-primary" onclick="carregarPreviewCST()">🔄 Verificar tabela atual</button>
+            <span id="status-cst" style="font-size:12px;color:var(--muted);"></span>
+          </div>
+          <div id="preview-cst" style="max-height:220px;overflow-y:auto;"></div>
+        </div>
+      </div>
+
     </div>
   </main>
 </div>
@@ -1035,6 +1102,138 @@ async function confirmarExcluirLoja() {
     await carregarLojas();
   } catch (e) {
     alert('Erro ao excluir: ' + e.message);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// TABELAS FISCAIS
+// ══════════════════════════════════════════════════════════
+
+const FISCAL_CONFIG = {
+  cest: {
+    tabela: 'tab_cest',
+    colunas: ['codigo','descricao','ncm'],
+    conflito: 'codigo',
+    headers: ['Código','Descrição','NCM'],
+    exemplo: [
+      'codigo,descricao,ncm',
+      '2800700,Vestuário de malha - camiseta,6109.10.00',
+      '2800800,Calças e shorts de malha,6103.42.00',
+      '2801600,Meia-calça e collant,6115.10.00'
+    ]
+  },
+  cfop: {
+    tabela: 'tab_cfop',
+    colunas: ['codigo','descricao','tipo'],
+    conflito: 'codigo',
+    headers: ['Código','Descrição','Tipo'],
+    exemplo: [
+      'codigo,descricao,tipo',
+      '5102,Venda de mercadoria adquirida ou recebida de terceiros,saida',
+      '5405,Venda de mercadoria sujeita a substituição tributária,saida',
+      '6102,Venda de mercadoria adquirida de terceiros (fora do estado),saida',
+      '1102,Compra para comercialização,entrada',
+      '1403,Compra com ST para comercialização,entrada'
+    ]
+  }
+};
+
+function trocarAbaFiscal(aba) {
+  ['cest','cfop','cst'].forEach(function(a) {
+    var el = document.getElementById('aba-fiscal-' + a);
+    var tab = document.getElementById('tab-fiscal-' + a);
+    if (el) el.style.display = a === aba ? 'block' : 'none';
+    if (tab) { tab.style.opacity = a === aba ? '1' : '0.6'; tab.style.borderBottom = a === aba ? '2px solid var(--accent)' : '2px solid transparent'; }
+  });
+}
+
+function baixarModeloCSV(tipo) {
+  var cfg = FISCAL_CONFIG[tipo];
+  var blob = new Blob(['﻿' + cfg.exemplo.join('
+')], { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'modelo_' + tipo + '.csv'; a.click();
+}
+
+function parseCSV(texto) {
+  var linhas = texto.trim().split(/?
+/);
+  var header = linhas[0].split(',').map(function(h){ return h.trim().replace(/^"|"$/g,''); });
+  var rows = [];
+  for (var i = 1; i < linhas.length; i++) {
+    if (!linhas[i].trim()) continue;
+    var cols = linhas[i].split(',').map(function(v){ return v.trim().replace(/^"|"$/g,''); });
+    var obj = {}; header.forEach(function(h, idx){ obj[h] = cols[idx] || ''; }); rows.push(obj);
+  }
+  return rows;
+}
+
+function previewCSV(tipo) {
+  var input = document.getElementById('file-' + tipo);
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var rows = parseCSV(e.target.result);
+    var cfg = FISCAL_CONFIG[tipo];
+    document.getElementById('status-' + tipo).textContent = rows.length + ' registros encontrados.';
+    var html = '<table style="font-size:11px;width:100%;border-collapse:collapse;"><thead><tr>'
+      + cfg.headers.map(function(h){ return '<th style="background:var(--accent);color:#fff;padding:6px 8px;text-align:left;">' + h + '</th>'; }).join('')
+      + '</tr></thead><tbody>';
+    var max = Math.min(rows.length, 8);
+    for (var i = 0; i < max; i++) {
+      html += '<tr style="' + (i%2?'background:#FAF7F4;':'') + '">'
+        + cfg.colunas.map(function(col){ return '<td style="padding:5px 8px;border-bottom:1px solid var(--border);">' + (rows[i][col]||'—') + '</td>'; }).join('') + '</tr>';
+    }
+    if (rows.length > 8) html += '<tr><td colspan="' + cfg.colunas.length + '" style="padding:5px 8px;color:var(--muted);font-style:italic;">... e mais ' + (rows.length-8) + ' registros</td></tr>';
+    html += '</tbody></table>';
+    document.getElementById('preview-' + tipo).innerHTML = html;
+    input._parsedRows = rows;
+    document.getElementById('btn-importar-' + tipo).style.display = 'inline-flex';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+async function importarTabela(tipo) {
+  var input = document.getElementById('file-' + tipo);
+  var rows = input._parsedRows; if (!rows || !rows.length) { alert('Nenhum dado.'); return; }
+  var cfg = FISCAL_CONFIG[tipo];
+  var statusEl = document.getElementById('status-' + tipo);
+  var btn = document.getElementById('btn-importar-' + tipo);
+  btn.disabled = true; btn.textContent = 'Importando...';
+  var total = 0; var erros = 0; var LOTE = 100;
+  for (var i = 0; i < rows.length; i += LOTE) {
+    var lote = rows.slice(i, i+LOTE).map(function(row) {
+      var obj = {}; cfg.colunas.forEach(function(col){ obj[col] = row[col]||null; }); return obj;
+    });
+    try { await sbUpsert(cfg.tabela, lote, cfg.conflito); total += lote.length; statusEl.textContent = 'Importando... ' + total + '/' + rows.length; }
+    catch(e) { erros += lote.length; console.error(e); }
+  }
+  btn.disabled = false; btn.textContent = '✅ Confirmar importação';
+  statusEl.style.color = erros === 0 ? 'var(--success)' : 'var(--danger)';
+  statusEl.textContent = erros === 0 ? ('✅ ' + total + ' registros importados!') : ('⚠ ' + total + ' ok, ' + erros + ' com erro.');
+  document.getElementById('stats-' + tipo).textContent = 'Última importação: ' + new Date().toLocaleString('pt-BR') + ' — ' + total + ' registros.';
+}
+
+async function carregarPreviewCST() {
+  var statusEl = document.getElementById('status-cst');
+  statusEl.textContent = 'Consultando...'; statusEl.style.color = 'var(--muted)';
+  try {
+    var dados = await sbGet('tab_cst_piscofins', 'order=codigo.asc');
+    statusEl.style.color = 'var(--success)'; statusEl.textContent = '✅ ' + dados.length + ' registros na tabela.';
+    var html = '<table style="font-size:11px;width:100%;border-collapse:collapse;"><thead><tr>'
+      + ['Código','Descrição','Regime'].map(function(h){ return '<th style="background:var(--accent);color:#fff;padding:6px 8px;text-align:left;">' + h + '</th>'; }).join('')
+      + '</tr></thead><tbody>';
+    dados.forEach(function(row, i) {
+      html += '<tr style="' + (i%2?'background:#FAF7F4;':'') + '">'
+        + '<td style="padding:5px 8px;border-bottom:1px solid var(--border);font-weight:600;">' + row.codigo + '</td>'
+        + '<td style="padding:5px 8px;border-bottom:1px solid var(--border);">' + row.descricao + '</td>'
+        + '<td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--muted);">' + (row.regime||'—') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('preview-cst').innerHTML = html;
+  } catch(e) {
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = '❌ Tabela não encontrada. Execute o SQL de criação primeiro.';
   }
 }
 </script>
