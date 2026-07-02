@@ -1149,15 +1149,14 @@ function trocarAbaFiscal(aba) {
 
 function baixarModeloCSV(tipo) {
   var cfg = FISCAL_CONFIG[tipo];
-  var blob = new Blob(['﻿' + cfg.exemplo.join('
-')], { type: 'text/csv;charset=utf-8;' });
+  var conteudo = '\uFEFF' + cfg.exemplo.join('\n');
+  var blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'modelo_' + tipo + '.csv'; a.click();
 }
 
 function parseCSV(texto) {
-  var linhas = texto.trim().split(/?
-/);
+  var linhas = texto.trim().split(/\r?\n/);
   var header = linhas[0].split(',').map(function(h){ return h.trim().replace(/^"|"$/g,''); });
   var rows = [];
   for (var i = 1; i < linhas.length; i++) {
