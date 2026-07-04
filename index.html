@@ -616,11 +616,11 @@ async function carregarLojas() {
   document.getElementById('loading').style.display = 'block';
   document.getElementById('conteudo').style.display = 'none';
   try {
-    const [lojas, licResp] = await Promise.all([
-      sbGet('lojas', 'order=nome.asc'),
+    const [lojasResp, licResp] = await Promise.all([
+      chamarAdminFn('listar_lojas', {}),
       chamarAdminFn('listar_licencas', {})
     ]);
-    _lojas = lojas;
+    _lojas = lojasResp.lojas || [];
     _licencas = {};
     (licResp.licencas || []).forEach(l => { _licencas[l.loja_id] = l; });
 
@@ -1025,7 +1025,7 @@ async function salvarLoja() {
 
   try {
     if (idOriginal) {
-      await sbPatch('lojas', `id=eq.${idOriginal}`, dados);
+      await chamarAdminFn('atualizar_loja', { loja_id: idOriginal, dados });
     } else {
       const validade = document.getElementById('loja-licenca-validade').value || null;
       const resp = await chamarAdminFn('criar_loja', { dados, licenca_validade: validade });
@@ -1060,7 +1060,7 @@ async function salvarLicencaLoja() {
 
 async function toggleAtiva(id, ativaAtual) {
   try {
-    await sbPatch('lojas', `id=eq.${id}`, { ativa: !ativaAtual });
+    await chamarAdminFn('atualizar_loja', { loja_id: id, dados: { ativa: !ativaAtual } });
     await carregarLojas();
   } catch (e) {
     alert('Erro: ' + e.message);
