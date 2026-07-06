@@ -483,6 +483,378 @@
     tbody tr { display: block; padding: 12px 0; border-bottom: 1px solid var(--border); }
     .row-actions { justify-content: flex-start; padding-top: 8px; }
   }
+
+
+  /* =========================================================
+     VISUAL INTERNO PREMIUM — LEGADO RP
+     Apenas camada visual: não altera regras, funções, IDs ou integrações.
+  ========================================================= */
+  #painel {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 8% 4%, rgba(0, 194, 255, .12), transparent 28%),
+      radial-gradient(circle at 92% 1%, rgba(0, 102, 255, .14), transparent 30%),
+      linear-gradient(180deg, #061225 0%, #F4F7FB 36%, #F8FAFC 100%);
+  }
+
+  #painel header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 18px 30px;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    background:
+      linear-gradient(135deg, rgba(2, 9, 22, .94), rgba(4, 19, 42, .92)),
+      radial-gradient(circle at 18% 50%, rgba(0, 194, 255, .18), transparent 30%);
+    color: #F8FBFF;
+    box-shadow: 0 18px 45px rgba(3, 9, 23, .22);
+    backdrop-filter: blur(18px);
+  }
+
+  #painel header::before {
+    content: "LR";
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    margin-right: 14px;
+    font-weight: 950;
+    letter-spacing: -3px;
+    color: #fff;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.04)),
+      linear-gradient(135deg, #00C2FF 0%, #0066FF 60%, #003A98 100%);
+    border: 1px solid rgba(255,255,255,.18);
+    box-shadow: 0 18px 38px rgba(0, 102, 255, .34), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+
+  #painel header > div:first-child {
+    flex: 1;
+  }
+
+  #painel header h1 {
+    color: #FFFFFF;
+    font-size: 20px;
+    letter-spacing: -.2px;
+  }
+
+  #painel header h1::after {
+    content: "  LEGADO RP";
+    margin-left: 10px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    letter-spacing: 1.3px;
+    color: #A7E9FF;
+    background: rgba(0, 194, 255, .10);
+    border: 1px solid rgba(0, 194, 255, .20);
+    vertical-align: middle;
+  }
+
+  #painel header .sub {
+    color: rgba(230,242,255,.66);
+  }
+
+  #painel header .btn {
+    border-color: rgba(255,255,255,.14);
+    background: rgba(255,255,255,.08);
+    color: #F8FBFF;
+    box-shadow: none;
+  }
+
+  #painel header .btn:hover {
+    border-color: rgba(0,194,255,.50);
+    background: rgba(0,194,255,.13);
+    color: #FFFFFF;
+  }
+
+  #painel main {
+    max-width: 1320px;
+    padding: 30px 26px 44px;
+  }
+
+  #conteudo {
+    animation: painelFadeIn .35s ease both;
+  }
+
+  @keyframes painelFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #painel .cards-resumo {
+    grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+
+  #painel .card-resumo {
+    position: relative;
+    min-height: 122px;
+    padding: 22px;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,.18);
+    box-shadow: 0 22px 48px rgba(15, 23, 42, .16);
+    isolation: isolate;
+  }
+
+  #painel .card-resumo::before {
+    content: "";
+    position: absolute;
+    inset: -40% -30% auto auto;
+    width: 150px;
+    height: 150px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.22);
+    filter: blur(4px);
+    z-index: -1;
+  }
+
+  #painel .card-resumo::after {
+    content: "";
+    position: absolute;
+    inset: auto 14px 14px auto;
+    width: 34px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.40);
+  }
+
+  #painel .card-resumo .icon {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: rgba(255,255,255,.16);
+    margin-bottom: 14px;
+    font-size: 18px;
+  }
+
+  #painel .card-resumo .value {
+    font-size: 29px;
+    letter-spacing: -.8px;
+  }
+
+  #painel .card-resumo .label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .55px;
+    opacity: .84;
+  }
+
+  #painel .card-c1 { background: linear-gradient(135deg, #0066FF 0%, #003A98 100%); }
+  #painel .card-c2 { background: linear-gradient(135deg, #FFB020 0%, #F06400 100%); }
+  #painel .card-c3 { background: linear-gradient(135deg, #22C55E 0%, #087F5B 100%); }
+  #painel .card-c4 { background: linear-gradient(135deg, #FF4D6D 0%, #C01048 100%); }
+  #painel .card-c5 { background: linear-gradient(135deg, #00C2FF 0%, #0066FF 100%); }
+  #painel .card-c6 { background: linear-gradient(135deg, #7C3AED 0%, #3B0764 100%); }
+
+  #painel .chart-section,
+  #painel .section-card {
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 24px;
+    background: rgba(255,255,255,.92);
+    box-shadow: 0 22px 54px rgba(15, 23, 42, .10);
+    backdrop-filter: blur(12px);
+  }
+
+  #painel .chart-section {
+    padding: 24px 26px;
+  }
+
+  #painel .chart-section h2,
+  #painel .section-card-header h2 {
+    color: #07111F;
+    font-size: 16px;
+    letter-spacing: -.2px;
+  }
+
+  #painel .section-card {
+    overflow: hidden;
+  }
+
+  #painel .section-card-header {
+    padding: 20px 22px;
+    border-left: 0;
+    background:
+      linear-gradient(180deg, rgba(248,250,252,.95), rgba(255,255,255,.85));
+    border-bottom: 1px solid rgba(15,23,42,.07);
+  }
+
+  #painel .section-card-header h2::before {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00C2FF, #0066FF);
+    box-shadow: 0 0 0 5px rgba(0, 141, 255, .10);
+    vertical-align: 1px;
+  }
+
+  #painel input,
+  #painel select,
+  #painel textarea {
+    border-color: #D8DEE8;
+    background: #FFFFFF;
+    border-radius: 13px;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+
+  #painel input:focus,
+  #painel select:focus,
+  #painel textarea:focus {
+    border-color: #008DFF;
+    box-shadow: 0 0 0 4px rgba(0,141,255,.12);
+  }
+
+  #painel .btn {
+    border-radius: 13px;
+    border-color: #D8DEE8;
+    background: #FFFFFF;
+    color: #0B1730;
+    box-shadow: 0 6px 16px rgba(15,23,42,.05);
+    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, color .16s ease, background .16s ease;
+  }
+
+  #painel .btn:hover {
+    transform: translateY(-1px);
+    border-color: #008DFF;
+    color: #0066FF;
+    box-shadow: 0 12px 26px rgba(0,102,255,.12);
+  }
+
+  #painel .btn-primary {
+    color: #FFFFFF;
+    border-color: transparent;
+    background: linear-gradient(135deg, #00C2FF 0%, #0066FF 58%, #003A98 100%);
+    box-shadow: 0 15px 28px rgba(0,102,255,.24);
+  }
+
+  #painel .btn-primary:hover {
+    color: #FFFFFF;
+    filter: saturate(1.08);
+  }
+
+  #painel .btn-danger {
+    color: #D92D20;
+    background: #FFF7F7;
+    border-color: #FFD6D6;
+  }
+
+  #painel thead th {
+    padding: 13px 20px;
+    border-color: rgba(15,23,42,.07);
+    color: #64748B;
+    background: #F8FAFC;
+    font-size: 10.5px;
+    letter-spacing: .6px;
+  }
+
+  #painel tbody td {
+    padding: 16px 20px;
+    border-color: rgba(15,23,42,.06);
+    color: #1E293B;
+  }
+
+  #painel tbody tr {
+    transition: background .14s ease, transform .14s ease;
+  }
+
+  #painel tbody tr:hover {
+    background: linear-gradient(90deg, rgba(0,194,255,.055), transparent 62%);
+  }
+
+  #painel .col-nome {
+    font-weight: 800;
+    color: #07111F;
+  }
+
+  #painel .col-email {
+    color: #0066FF;
+    font-weight: 700;
+  }
+
+  #painel .badge {
+    border-radius: 999px;
+    padding: 5px 11px;
+    letter-spacing: .15px;
+  }
+
+  #painel .badge-ativa,
+  #painel .badge-ok {
+    color: #047857;
+    background: #ECFDF3;
+    border: 1px solid #B7F7D0;
+  }
+
+  #painel .badge-inativa {
+    color: #64748B;
+    background: #F1F5F9;
+    border: 1px solid #E2E8F0;
+  }
+
+  #painel .badge-vencendo {
+    color: #B45309;
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+  }
+
+  #painel .badge-vencida {
+    color: #B42318;
+    background: #FEF3F2;
+    border: 1px solid #FECDCA;
+  }
+
+  #painel .modal-bg {
+    background: rgba(3, 9, 23, .66);
+    backdrop-filter: blur(8px);
+  }
+
+  #painel .modal-box {
+    border: 1px solid rgba(255,255,255,.70);
+    border-radius: 26px;
+    box-shadow: 0 32px 90px rgba(2, 8, 23, .32);
+  }
+
+  #painel .modal-box h2 {
+    font-size: 20px;
+    letter-spacing: -.3px;
+  }
+
+  #painel .modal-tab {
+    border-radius: 12px 12px 0 0;
+  }
+
+  #painel .modal-tab.active {
+    color: #0066FF;
+    border-bottom-color: #0066FF;
+  }
+
+  #painel .preview-visual,
+  #painel .logo-preview {
+    border-radius: 18px;
+    border-color: rgba(15,23,42,.10);
+    box-shadow: 0 12px 28px rgba(15,23,42,.08);
+  }
+
+  #painel #loading {
+    margin-top: 44px;
+    color: rgba(255,255,255,.78);
+    font-weight: 700;
+  }
+
+  @media (max-width: 640px) {
+    #painel header { padding: 16px 18px; }
+    #painel header::before { width: 42px; height: 42px; border-radius: 14px; }
+    #painel main { padding: 20px 14px 32px; }
+    #painel .cards-resumo { grid-template-columns: 1fr; }
+    #painel tbody tr { background: #FFFFFF; }
+  }
 </style>
 </head>
 <body>
