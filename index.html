@@ -1855,8 +1855,10 @@ const ASAAS_EDGE_URL = `${SB_URL}/functions/v1/asaas-proxy`;
 const ASAAS_SANDBOX = true;
 
 function trocarAbaLicenca(aba) {
-  document.getElementById('lic-aba-manual').style.display  = aba === 'manual' ? 'block' : 'none';
-  document.getElementById('lic-aba-asaas').style.display   = aba === 'asaas'  ? 'block' : 'none';
+  const elManual = document.getElementById('lic-aba-manual');
+  const elAsaas  = document.getElementById('lic-aba-asaas');
+  if (elManual) elManual.style.setProperty('display', aba === 'manual' ? 'block' : 'none', 'important');
+  if (elAsaas)  elAsaas.style.setProperty('display',  aba === 'asaas'  ? 'block' : 'none', 'important');
   document.getElementById('lic-tab-manual').classList.toggle('active', aba === 'manual');
   document.getElementById('lic-tab-asaas').classList.toggle('active',  aba === 'asaas');
 }
