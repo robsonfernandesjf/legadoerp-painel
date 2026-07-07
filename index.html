@@ -1887,7 +1887,7 @@ function abrirModalLicenca(lojaId, lojaNome) {
     const prox = new Date(); prox.setDate(prox.getDate() + 30);
     document.getElementById('lic-asaas-vencimento').value = prox.toISOString().slice(0,10);
     document.getElementById('lic-asaas-msg').textContent = '';
-    trocarAbaLicenca('asaas'); // padrão: aba Asaas para lojas vinculadas
+    trocarAbaLicenca('manual'); // padrão: sempre abre em manual
   } else {
     // Loja sem Asaas: só aba manual + opção de vincular
     document.getElementById('lic-tabs').style.display        = 'none';
