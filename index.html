@@ -1120,6 +1120,10 @@
           💳 Habilitar Crediário (substitui o Fiado)
         </label>
         <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;margin-top:8px;">
+          <input type="checkbox" id="loja-usa-consignado" style="width:auto;margin:0;">
+          📦 Habilitar Consignado
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;margin-top:8px;">
           <input type="checkbox" id="loja-usa-catalogo" style="width:auto;margin:0;" onchange="document.getElementById('loja-catalogo-whats-wrap').style.display=this.checked?'block':'none'">
           🛍️ Habilitar catálogo público (vitrine sem login)
         </label>
@@ -1694,6 +1698,7 @@ function abrirModalNovaLoja() {
   document.getElementById('loja-usa-grade').checked = false;
   document.getElementById('loja-usa-catalogo').checked = false;
   document.getElementById('loja-usa-crediario').checked = false;
+  document.getElementById('loja-usa-consignado').checked = false;
   document.getElementById('loja-catalogo-whats').value = '';
   document.getElementById('loja-catalogo-whats-wrap').style.display = 'none';
   document.getElementById('loja-banner-url').value = '';
@@ -1725,6 +1730,7 @@ function abrirModalEditarLoja(id) {
   document.getElementById('loja-usa-grade').checked = !!loja.usa_grade;
   document.getElementById('loja-usa-catalogo').checked = !!loja.usa_catalogo;
   document.getElementById('loja-usa-crediario').checked = !!loja.usa_crediario;
+  document.getElementById('loja-usa-consignado').checked = !!loja.usa_consignado;
   document.getElementById('loja-catalogo-whats').value = loja.catalogo_whatsapp || '';
   document.getElementById('loja-catalogo-whats-wrap').style.display = loja.usa_catalogo ? 'block' : 'none';
   document.getElementById('loja-banner-url').value = loja.catalogo_banner_url || '';
@@ -1830,6 +1836,7 @@ async function salvarLoja() {
     usa_grade: document.getElementById('loja-usa-grade').checked,
     usa_catalogo: document.getElementById('loja-usa-catalogo').checked,
     usa_crediario: document.getElementById('loja-usa-crediario').checked,
+    usa_consignado: document.getElementById('loja-usa-consignado').checked,
     catalogo_whatsapp: document.getElementById('loja-catalogo-whats').value.trim(),
     catalogo_banner_url: document.getElementById('loja-banner-url').value || null,
     observacoes: document.getElementById('loja-obs').value.trim(),
