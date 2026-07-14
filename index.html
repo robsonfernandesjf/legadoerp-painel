@@ -855,6 +855,30 @@
     #painel .cards-resumo { grid-template-columns: 1fr; }
     #painel tbody tr { background: #FFFFFF; }
   }
+
+  /* ── NAV SEÇÕES (Legado ERP / Legado Mercado) ── */
+  .secao-nav {
+    display: flex; gap: 6px; margin-bottom: 24px;
+    border-bottom: 2px solid var(--border); padding-bottom: 0;
+  }
+  .secao-nav-btn {
+    padding: 10px 20px; border: none; background: none; cursor: pointer;
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    transition: all .15s; border-radius: 6px 6px 0 0;
+  }
+  .secao-nav-btn:hover { color: var(--accent); }
+  .secao-nav-btn.ativa { color: var(--accent); border-bottom-color: var(--accent); background: var(--accent-light); }
+
+  /* ── LEGADO MERCADO — estilos da aba ── */
+  .lm-cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 12px; margin-bottom: 24px; }
+  .lm-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .lm-card .lv { font-size: 26px; font-weight: 800; color: var(--text); line-height:1; }
+  .lm-card .ll { font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 600; }
+  .lm-badge-ativo   { background:#E7F6EC; color:#16A34A; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
+  .lm-badge-vence   { background:#FEF3E7; color:#F2994A; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
+  .lm-badge-vencido { background:#FDECEC; color:#E0383E; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
+  .lm-badge-inativo { background:#F3F4F6; color:#6B7280; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
 </style>
 </head>
 <body>
@@ -961,6 +985,13 @@
   <main>
     <div id="loading">Carregando lojas...</div>
 
+    <div id="secao-nav" style="display:none;">
+      <div class="secao-nav">
+        <button class="secao-nav-btn ativa" id="nav-erp" onclick="trocarSecao('erp')">🏪 Legado ERP</button>
+        <button class="secao-nav-btn" id="nav-mercado" onclick="trocarSecao('mercado')">🛒 Legado Mercado</button>
+      </div>
+    </div>
+
     <div id="conteudo" style="display:none;">
 
       <div class="cards-resumo" id="cards-resumo"></div>
@@ -1059,7 +1090,44 @@
         </div>
       </div>
 
-    </div>
+    </div><!-- /conteudo -->
+
+    <!-- ══ LEGADO MERCADO ══ -->
+    <div id="lm-painel" style="display:none;">
+
+      <div class="lm-cards" id="lm-cards-resumo">
+        <div class="lm-card"><div class="lv" id="lm-total">—</div><div class="ll">Total de clientes</div></div>
+        <div class="lm-card"><div class="lv" id="lm-ativos" style="color:#16A34A;">—</div><div class="ll">Licenças ativas</div></div>
+        <div class="lm-card"><div class="lv" id="lm-vencendo" style="color:#F2994A;">—</div><div class="ll">Vencem em 7 dias</div></div>
+        <div class="lm-card"><div class="lv" id="lm-vencidos" style="color:#E0383E;">—</div><div class="ll">Vencidas / inativas</div></div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-card-header">
+          <h2>🛒 Clientes Legado Mercado</h2>
+          <div class="actions">
+            <input type="text" id="lm-busca" placeholder="Buscar cliente..." style="width:200px;" oninput="lmFiltrar()">
+            <button class="btn btn-primary" onclick="lmAbrirNovo()">+ Novo cliente</button>
+          </div>
+        </div>
+        <table id="lm-tabela">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Chave</th>
+              <th>Validade</th>
+              <th>Status</th>
+              <th>Obs</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="lm-tbody"></tbody>
+        </table>
+        <p id="lm-vazia" style="display:none;text-align:center;padding:32px;color:var(--muted);font-size:13px;">Nenhum cliente cadastrado ainda.</p>
+      </div>
+
+    </div><!-- /lm-painel -->
+
   </main>
 </div>
 
@@ -1330,6 +1398,45 @@
   </div>
 </div>
 
+<!-- MODAL: Legado Mercado — Novo/Editar cliente -->
+<div class="modal-bg" id="lm-modal" style="display:none;align-items:center;justify-content:center;">
+  <div class="modal-box" style="max-width:480px;width:100%;">
+    <h2 id="lm-modal-titulo">+ Novo cliente</h2>
+    <input type="hidden" id="lm-id">
+    <div class="form-row">
+      <label>Nome do cliente *</label>
+      <input type="text" id="lm-nome" placeholder="ex: Mercearia do João" style="width:100%;">
+    </div>
+    <div class="form-row">
+      <label>Chave de licença</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="lm-chave" placeholder="Gerada automaticamente" style="flex:1;font-family:monospace;" readonly>
+        <button class="btn btn-sm" onclick="lmGerarChave()">🔄 Gerar</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Validade *</label>
+      <input type="date" id="lm-validade" style="width:100%;">
+    </div>
+    <div class="form-row">
+      <label>Ativo</label>
+      <select id="lm-ativo" style="width:100%;">
+        <option value="true">Sim</option>
+        <option value="false">Não</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Observações</label>
+      <textarea id="lm-obs" rows="2" placeholder="Anotações internas..." style="width:100%;resize:vertical;"></textarea>
+    </div>
+    <p id="lm-modal-erro" style="color:var(--danger);font-size:12px;display:none;margin-bottom:8px;"></p>
+    <div class="modal-actions">
+      <button class="btn" onclick="lmFecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="lmSalvar()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // =====================================================================
 // CONFIGURAÇÃO — mesmo Supabase usado pelas lojas (multi-tenant)
@@ -1441,8 +1548,9 @@ async function carregarLojas() {
 
     renderResumo();
     renderLojas();
-    document.getElementById('loading').style.display = 'none';
+    document.getElementById('loading').style.display  = 'none';
     document.getElementById('conteudo').style.display = 'block';
+    document.getElementById('secao-nav').style.display = 'block';
   } catch (e) {
     document.getElementById('loading').innerHTML = `<span style="color:var(--danger)">Erro ao carregar: ${e.message}</span>`;
   }
@@ -2180,6 +2288,185 @@ async function carregarPreviewCST() {
     html+='</tbody></table>';
     document.getElementById('preview-cst').innerHTML=html;
   }catch(e){statusEl.style.color='var(--danger)';statusEl.textContent='❌ Tabela não encontrada. Execute o SQL de criação primeiro.';}
+}
+
+// =====================================================================
+// LEGADO MERCADO — gestão de licenças
+// =====================================================================
+let _lmLicencas = [];
+
+function trocarSecao(secao) {
+  const erp     = document.getElementById('conteudo');
+  const mercado = document.getElementById('lm-painel');
+  const btnErp  = document.getElementById('nav-erp');
+  const btnMerc = document.getElementById('nav-mercado');
+  if (secao === 'erp') {
+    erp.style.display     = 'block';
+    mercado.style.display = 'none';
+    btnErp.classList.add('ativa');
+    btnMerc.classList.remove('ativa');
+  } else {
+    erp.style.display     = 'none';
+    mercado.style.display = 'block';
+    btnErp.classList.remove('ativa');
+    btnMerc.classList.add('ativa');
+    lmCarregar();
+  }
+}
+
+async function lmCarregar() {
+  try {
+    _lmLicencas = await sbGet('lm_licencas', 'order=criado_em.desc');
+    lmRenderizar(_lmLicencas);
+    lmAtualizarCards(_lmLicencas);
+  } catch(e) {
+    console.error('Legado Mercado:', e);
+  }
+}
+
+function lmStatus(lic) {
+  if (!lic.ativo) return { label:'Inativo', cls:'lm-badge-inativo' };
+  const hoje  = new Date(); hoje.setHours(0,0,0,0);
+  const valid = new Date(lic.validade + 'T00:00:00');
+  const diff  = Math.ceil((valid - hoje) / 86400000);
+  if (diff < 0)  return { label:'Vencida',         cls:'lm-badge-vencido' };
+  if (diff <= 7) return { label:'Vence em '+diff+'d', cls:'lm-badge-vence' };
+  return { label:'Ativo', cls:'lm-badge-ativo' };
+}
+
+function lmAtualizarCards(lista) {
+  const hoje   = new Date(); hoje.setHours(0,0,0,0);
+  let ativos=0, vencendo=0, vencidos=0;
+  lista.forEach(function(l) {
+    if (!l.ativo) { vencidos++; return; }
+    const valid = new Date(l.validade+'T00:00:00');
+    const diff  = Math.ceil((valid - hoje) / 86400000);
+    if (diff < 0)       vencidos++;
+    else if (diff <= 7) vencendo++;
+    else                ativos++;
+  });
+  document.getElementById('lm-total').textContent   = lista.length;
+  document.getElementById('lm-ativos').textContent  = ativos;
+  document.getElementById('lm-vencendo').textContent= vencendo;
+  document.getElementById('lm-vencidos').textContent = vencidos;
+}
+
+function lmRenderizar(lista) {
+  const tbody = document.getElementById('lm-tbody');
+  const vazia = document.getElementById('lm-vazia');
+  if (!lista.length) { tbody.innerHTML=''; vazia.style.display='block'; return; }
+  vazia.style.display='none';
+  tbody.innerHTML = lista.map(function(l) {
+    const st = lmStatus(l);
+    const val = l.validade ? new Date(l.validade+'T00:00:00').toLocaleDateString('pt-BR') : '—';
+    return '<tr>'
+      +'<td style="font-weight:600;">'+escHtml(l.cliente_nome)+'</td>'
+      +'<td><code style="font-size:11px;background:#F3F4F6;padding:2px 7px;border-radius:5px;">'+escHtml(l.chave)+'</code></td>'
+      +'<td>'+val+'</td>'
+      +'<td><span class="'+st.cls+'">'+st.label+'</span></td>'
+      +'<td style="color:var(--muted);font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(l.obs||'—')+'</td>'
+      +'<td style="white-space:nowrap;">'
+        +'<button class="btn btn-sm" onclick="lmRenovar(\''+l.id+'\',\''+l.validade+'\')" title="Renovar +30 dias">+30d</button> '
+        +'<button class="btn btn-sm" onclick="lmEditar(\''+l.id+'\')" title="Editar">✏</button> '
+        +'<button class="btn btn-sm btn-danger" onclick="lmExcluir(\''+l.id+'\',\''+escHtml(l.cliente_nome)+'\')" title="Excluir">✕</button>'
+      +'</td>'
+    +'</tr>';
+  }).join('');
+}
+
+function lmFiltrar() {
+  const q = document.getElementById('lm-busca').value.toLowerCase();
+  lmRenderizar(_lmLicencas.filter(function(l) {
+    return l.cliente_nome.toLowerCase().includes(q) || l.chave.toLowerCase().includes(q);
+  }));
+}
+
+function lmGerarChave() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let chave = 'LM';
+  for (let i=0;i<3;i++) { chave+='-'; for(let j=0;j<4;j++) chave+=chars[Math.floor(Math.random()*chars.length)]; }
+  document.getElementById('lm-chave').value = chave;
+}
+
+function lmAbrirNovo() {
+  document.getElementById('lm-modal-titulo').textContent = '+ Novo cliente';
+  document.getElementById('lm-id').value     = '';
+  document.getElementById('lm-nome').value   = '';
+  document.getElementById('lm-obs').value    = '';
+  document.getElementById('lm-ativo').value  = 'true';
+  document.getElementById('lm-modal-erro').style.display = 'none';
+  // Validade padrão: hoje + 30 dias
+  const d = new Date(); d.setDate(d.getDate()+30);
+  document.getElementById('lm-validade').value = d.toISOString().split('T')[0];
+  lmGerarChave();
+  document.getElementById('lm-modal').style.display = 'flex';
+}
+
+function lmEditar(id) {
+  const l = _lmLicencas.find(function(x){ return x.id===id; });
+  if (!l) return;
+  document.getElementById('lm-modal-titulo').textContent = '✏ Editar cliente';
+  document.getElementById('lm-id').value      = l.id;
+  document.getElementById('lm-nome').value    = l.cliente_nome;
+  document.getElementById('lm-chave').value   = l.chave;
+  document.getElementById('lm-validade').value= l.validade;
+  document.getElementById('lm-ativo').value   = l.ativo ? 'true' : 'false';
+  document.getElementById('lm-obs').value     = l.obs || '';
+  document.getElementById('lm-modal-erro').style.display = 'none';
+  document.getElementById('lm-modal').style.display = 'flex';
+}
+
+function lmFecharModal() {
+  document.getElementById('lm-modal').style.display = 'none';
+}
+
+async function lmSalvar() {
+  const id     = document.getElementById('lm-id').value;
+  const nome   = document.getElementById('lm-nome').value.trim();
+  const chave  = document.getElementById('lm-chave').value.trim();
+  const valid  = document.getElementById('lm-validade').value;
+  const ativo  = document.getElementById('lm-ativo').value === 'true';
+  const obs    = document.getElementById('lm-obs').value.trim();
+  const erroEl = document.getElementById('lm-modal-erro');
+  erroEl.style.display='none';
+  if (!nome || !chave || !valid) { erroEl.textContent='Preencha nome, chave e validade.'; erroEl.style.display='block'; return; }
+  try {
+    if (id) {
+      await sbPatch('lm_licencas','id=eq.'+id,{cliente_nome:nome,validade:valid,ativo:ativo,obs:obs||null});
+    } else {
+      await sbPost('lm_licencas',{cliente_nome:nome,chave:chave,validade:valid,ativo:ativo,obs:obs||null});
+    }
+    lmFecharModal();
+    lmCarregar();
+  } catch(e) {
+    erroEl.textContent = 'Erro: '+(e.message||e);
+    erroEl.style.display='block';
+  }
+}
+
+async function lmRenovar(id, validadeAtual) {
+  const base = validadeAtual && new Date(validadeAtual+'T00:00:00') > new Date()
+    ? new Date(validadeAtual+'T00:00:00')
+    : new Date();
+  base.setDate(base.getDate()+30);
+  const novaData = base.toISOString().split('T')[0];
+  if (!confirm('Renovar por 30 dias? Nova validade: '+new Date(novaData+'T00:00:00').toLocaleDateString('pt-BR'))) return;
+  try {
+    await sbPatch('lm_licencas','id=eq.'+id,{validade:novaData,ativo:true});
+    lmCarregar();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function lmExcluir(id, nome) {
+  if (!confirm('Excluir licença de "'+nome+'"? Esta ação não pode ser desfeita.')) return;
+  try {
+    await sbDelete('lm_licencas','id=eq.'+id);
+    lmCarregar();
+  } catch(e) { alert('Erro: '+e.message); }
+}
+
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 </script>
