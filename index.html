@@ -893,7 +893,9 @@
   .lm-alert-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; max-height:160px; overflow:auto; }
   .lm-alert-item { display:flex; justify-content:space-between; gap:10px; padding:9px 10px; background:#FFF8ED; border-radius:8px; font-size:12px; }
   .lm-chave-btn { border:0; cursor:pointer; font-family:monospace; font-size:11px; background:#F3F4F6; padding:4px 8px; border-radius:6px; color:#334155; }
+  .lm-update-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.lm-update-status{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;background:#FFF7ED;color:#C2410C;font-size:11px;font-weight:700}.lm-release-list{display:grid;gap:10px;padding:16px}.lm-release{display:grid;grid-template-columns:110px minmax(180px,1fr) 120px 110px auto;gap:14px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:13px 14px;background:#fff}.lm-release-version{font-weight:800;color:#0F766E}.lm-release small{display:block;color:var(--muted);margin-top:3px}.lm-progress{height:8px;background:#E5E7EB;border-radius:99px;overflow:hidden;margin-top:8px}.lm-progress span{display:block;height:100%;width:0;background:#16A34A;transition:width .2s}
   @media(max-width:850px){.lm-insights{grid-template-columns:1fr}.lm-hero{align-items:flex-start;flex-direction:column}.lm-toolbar input,.lm-toolbar select{width:100%;}}
+  @media(max-width:850px){.lm-release{grid-template-columns:1fr 1fr}.lm-release .lm-release-notes{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -1047,6 +1049,20 @@
             </thead>
             <tbody id="lojas-grid"></tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="section-card" style="margin-top:18px;">
+        <div class="section-card-header lm-update-head">
+          <div><h2>⬆ Atualizações do Legado Mercado</h2><p style="font-size:11px;color:var(--muted);margin-top:4px;">Publique instaladores e acompanhe a adoção das versões.</p></div>
+          <div class="actions">
+            <span class="lm-update-status" id="lm-update-estado">● Aguardando integração</span>
+            <button class="btn" onclick="lmAtualizacoesCarregar()">↻ Atualizar</button>
+            <button class="btn btn-primary" onclick="lmAbrirPublicacao()">+ Publicar versão</button>
+          </div>
+        </div>
+        <div class="lm-release-list" id="lm-release-list">
+          <div style="text-align:center;padding:25px;color:var(--muted);font-size:12px;">Nenhuma versão carregada.</div>
         </div>
       </div>
 
@@ -1472,6 +1488,22 @@
   </div>
 </div>
 
+<div class="modal-bg" id="lm-update-modal" style="display:none;align-items:center;justify-content:center;">
+  <div class="modal-box" style="max-width:560px;width:100%;">
+    <h2>Publicar atualização</h2>
+    <div class="form-row"><label>Versão *</label><input type="text" id="lm-up-versao" placeholder="Ex.: 1.0.1" style="width:100%;"></div>
+    <div class="form-row"><label>Instalador *</label><input type="file" id="lm-up-arquivo" accept=".exe" style="width:100%;"></div>
+    <div class="form-row"><label>Alterações</label><textarea id="lm-up-alteracoes" rows="4" placeholder="Descreva as melhorias desta versão..." style="width:100%;resize:vertical;"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-row"><label>Liberação inicial</label><select id="lm-up-percentual" style="width:100%;"><option value="0">Somente rascunho</option><option value="10">10% das instalações</option><option value="50">50% das instalações</option><option value="100">Todos os clientes</option></select></div>
+      <div class="form-row"><label>Tipo</label><select id="lm-up-obrigatoria" style="width:100%;"><option value="false">Atualização normal</option><option value="true">Atualização obrigatória</option></select></div>
+    </div>
+    <div id="lm-up-andamento" style="display:none;background:#F0FDF4;border:1px solid #BBF7D0;padding:12px;border-radius:9px;font-size:12px;color:#166534;"><span id="lm-up-texto">Preparando...</span><div class="lm-progress"><span id="lm-up-barra"></span></div></div>
+    <p id="lm-up-erro" style="display:none;color:var(--danger);font-size:12px;margin-top:10px;"></p>
+    <div class="modal-actions"><button class="btn" onclick="lmFecharPublicacao()">Cancelar</button><button class="btn btn-primary" id="lm-up-publicar" onclick="lmPublicarVersao()">Publicar</button></div>
+  </div>
+</div>
+
 <script>
 // =====================================================================
 // CONFIGURAÇÃO — mesmo Supabase usado pelas lojas (multi-tenant)
@@ -1479,6 +1511,7 @@
 const SB_URL = 'https://zzqoxpgidalxjxhgyuot.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94cGdpZGFseGp4aGd5dW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NDI0NjIsImV4cCI6MjA5NzIxODQ2Mn0.FX-9C-u4xjDY1CS8vwOhbfIDPMGmHSbQUFpvxmQ9j5M';
 const SB_HEADS = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+const LM_UPDATE_ADMIN_URL = `${SB_URL}/functions/v1/lm-admin-atualizacoes`;
 
 // Senha de acesso a este painel (troque para algo só seu)
 const SENHA_ADMIN = 'admin-saas-2026';
@@ -2356,6 +2389,7 @@ async function lmCarregar() {
     lmRenderizar(_lmLicencas);
     lmAtualizarCards(_lmLicencas);
     lmRenderInsights(_lmLicencas);
+    lmAtualizacoesCarregar();
   } catch(e) {
     console.error('Legado Mercado:', e);
   }
@@ -2533,6 +2567,84 @@ async function lmExcluir(id, nome) {
     await sbDelete('lm_licencas','id=eq.'+id);
     lmCarregar();
   } catch(e) { alert('Erro: '+e.message); }
+}
+
+async function lmAtualizacaoFn(acao, dados={}) {
+  const resposta = await fetch(LM_UPDATE_ADMIN_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},
+    body:JSON.stringify({acao, senha_admin:_senhaAdminSessao, ...dados})
+  });
+  const corpo = await resposta.json().catch(()=>({}));
+  if(!resposta.ok) throw new Error(corpo.erro || corpo.error || 'Serviço de atualização indisponível.');
+  return corpo;
+}
+
+async function lmAtualizacoesCarregar() {
+  const estado = document.getElementById('lm-update-estado');
+  const lista = document.getElementById('lm-release-list');
+  if(!estado || !lista) return;
+  estado.textContent='● Sincronizando...'; estado.style.background='#EFF6FF'; estado.style.color='#1D4ED8';
+  try {
+    const dados = await lmAtualizacaoFn('listar');
+    const versoes = dados.versoes || [];
+    estado.textContent='● Integração ativa'; estado.style.background='#ECFDF5'; estado.style.color='#047857';
+    if(!versoes.length){lista.innerHTML='<div style="text-align:center;padding:25px;color:var(--muted);font-size:12px;">Nenhuma atualização publicada.</div>';return;}
+    lista.innerHTML=versoes.map(v=>{
+      const data=v.publicado_em?new Date(v.publicado_em).toLocaleDateString('pt-BR'):'Rascunho';
+      const tamanho=Number(v.tamanho_bytes||0)/1048576;
+      const status=v.publicada?'<span class="lm-badge-ativo">Publicada</span>':'<span class="lm-badge-inativo">Rascunho</span>';
+      return '<div class="lm-release"><div><div class="lm-release-version">v'+escHtml(v.versao)+'</div><small>'+data+'</small></div>'+
+        '<div class="lm-release-notes"><b>'+(v.obrigatoria?'Obrigatória':'Normal')+'</b><small>'+escHtml(v.alteracoes||'Sem descrição')+'</small></div>'+
+        '<div>'+status+'<small>'+Number(v.liberacao_percentual||0)+'% liberada</small></div>'+
+        '<div><b>'+tamanho.toFixed(1)+' MB</b><small>'+(v.instalacoes_atualizadas||0)+' atualizada(s)</small></div>'+
+        '<div><button class="btn btn-sm" onclick="lmAlterarLiberacao(\''+v.id+'\','+Number(v.liberacao_percentual||0)+')">Liberação</button></div></div>';
+    }).join('');
+  } catch(e) {
+    estado.textContent='● Integração pendente'; estado.style.background='#FFF7ED'; estado.style.color='#C2410C';
+    lista.innerHTML='<div style="padding:18px;color:#9A3412;background:#FFF7ED;border-radius:9px;font-size:12px;">A tela está pronta. A função de publicação ainda precisa ser ativada no Supabase.</div>';
+  }
+}
+
+function lmAbrirPublicacao(){
+  document.getElementById('lm-up-versao').value=''; document.getElementById('lm-up-arquivo').value='';
+  document.getElementById('lm-up-alteracoes').value=''; document.getElementById('lm-up-percentual').value='0';
+  document.getElementById('lm-up-obrigatoria').value='false'; document.getElementById('lm-up-erro').style.display='none';
+  document.getElementById('lm-up-andamento').style.display='none'; document.getElementById('lm-update-modal').style.display='flex';
+}
+function lmFecharPublicacao(){document.getElementById('lm-update-modal').style.display='none';}
+
+async function lmSha256(arquivo){
+  const buffer=await arquivo.arrayBuffer(); const hash=await crypto.subtle.digest('SHA-256',buffer);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function lmPublicarVersao(){
+  const versao=document.getElementById('lm-up-versao').value.trim(); const arquivo=document.getElementById('lm-up-arquivo').files[0];
+  const erro=document.getElementById('lm-up-erro'); const box=document.getElementById('lm-up-andamento');
+  const texto=document.getElementById('lm-up-texto'); const barra=document.getElementById('lm-up-barra'); const btn=document.getElementById('lm-up-publicar');
+  erro.style.display='none'; if(!/^\d+\.\d+\.\d+$/.test(versao)||!arquivo){erro.textContent='Informe uma versão no formato 1.0.1 e selecione o instalador.';erro.style.display='block';return;}
+  if(!arquivo.name.toLowerCase().endsWith('.exe')){erro.textContent='Selecione o instalador .exe do Legado Mercado.';erro.style.display='block';return;}
+  btn.disabled=true; box.style.display='block';
+  try {
+    texto.textContent='Calculando assinatura de segurança...';barra.style.width='15%'; const sha256=await lmSha256(arquivo);
+    texto.textContent='Preparando envio privado...';barra.style.width='35%';
+    const prep=await lmAtualizacaoFn('preparar_upload',{versao,arquivo_nome:arquivo.name,tamanho_bytes:arquivo.size,sha256,
+      alteracoes:document.getElementById('lm-up-alteracoes').value.trim(),obrigatoria:document.getElementById('lm-up-obrigatoria').value==='true',
+      liberacao_percentual:Number(document.getElementById('lm-up-percentual').value)});
+    texto.textContent='Enviando instalador...';barra.style.width='60%';
+    const envio=await fetch(prep.upload_url,{method:'PUT',headers:{'Content-Type':'application/octet-stream'},body:arquivo});
+    if(!envio.ok) throw new Error('Falha ao enviar o instalador ao armazenamento privado.');
+    texto.textContent='Conferindo e publicando...';barra.style.width='85%';
+    await lmAtualizacaoFn('concluir_publicacao',{versao_id:prep.versao_id}); barra.style.width='100%';texto.textContent='Atualização publicada com sucesso.';
+    setTimeout(()=>{lmFecharPublicacao();lmAtualizacoesCarregar();},900);
+  }catch(e){erro.textContent=e.message||String(e);erro.style.display='block';box.style.display='none';}finally{btn.disabled=false;}
+}
+
+async function lmAlterarLiberacao(id, atual){
+  const valor=prompt('Percentual de liberação (0 a 100):',atual); if(valor===null)return;
+  const percentual=Number(valor); if(!Number.isInteger(percentual)||percentual<0||percentual>100){alert('Informe um número inteiro de 0 a 100.');return;}
+  try{await lmAtualizacaoFn('alterar_liberacao',{versao_id:id,liberacao_percentual:percentual});lmAtualizacoesCarregar();}catch(e){alert('Erro: '+e.message);}
 }
 
 function escHtml(str) {
