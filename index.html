@@ -1121,6 +1121,7 @@
         <div class="lm-card" style="--lm-glow:#FEF3C7"><div class="lv" id="lm-vencendo" style="color:#D97706;">—</div><div class="ll">Vencem em até 5 dias</div><span class="li">⏳</span></div>
         <div class="lm-card" style="--lm-glow:#FEE2E2"><div class="lv" id="lm-vencidos" style="color:#E0383E;">—</div><div class="ll">Vencidas / inativas</div><span class="li">!</span></div>
         <div class="lm-card" style="--lm-glow:#EDE9FE"><div class="lv" id="lm-renovacao" style="color:#7C3AED;">—</div><div class="ll">Renovação necessária</div><span class="li">↻</span></div>
+        <div class="lm-card" style="--lm-glow:#CCFBF1"><div class="lv" id="lm-faturamento" style="color:#0F766E;font-size:21px;">—</div><div class="ll">Faturamento mensal previsto</div><span class="li">R$</span></div>
       </div>
 
       <div class="lm-insights">
@@ -1144,8 +1145,9 @@
               <th>Chave</th>
                <th>Validade</th>
                <th>Dias</th>
-              <th>Status</th>
-              <th>Obs</th>
+               <th>Status</th>
+               <th>Mensalidade</th>
+               <th>Obs</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -1445,6 +1447,11 @@
     <div class="form-row">
       <label>Validade *</label>
       <input type="date" id="lm-validade" style="width:100%;">
+    </div>
+    <div class="form-row">
+      <label>Valor mensal (R$)</label>
+      <input type="number" id="lm-valor-mensal" min="0" step="0.01" placeholder="Ex.: 99,90" style="width:100%;">
+      <div style="font-size:11px;color:var(--muted);margin-top:5px;">Usado apenas para a previsão de faturamento do Legado Mercado.</div>
     </div>
     <div class="form-row">
       <label>Ativo</label>
@@ -2367,6 +2374,7 @@ function lmStatus(lic) {
 function lmAtualizarCards(lista) {
   const hoje   = new Date(); hoje.setHours(0,0,0,0);
   let ativos=0, vencendo=0, vencidos=0;
+  let faturamento=0;
   lista.forEach(function(l) {
     if (!l.ativo) { vencidos++; return; }
     const valid = new Date(l.validade+'T00:00:00');
@@ -2374,12 +2382,14 @@ function lmAtualizarCards(lista) {
     if (diff < 0)       vencidos++;
     else if (diff <= 5) vencendo++;
     else                ativos++;
+    if (diff >= 0) faturamento += Number(l.valor_mensal || 0);
   });
   document.getElementById('lm-total').textContent   = lista.length;
   document.getElementById('lm-ativos').textContent  = ativos;
   document.getElementById('lm-vencendo').textContent= vencendo;
   document.getElementById('lm-vencidos').textContent = vencidos;
   document.getElementById('lm-renovacao').textContent = vencendo + vencidos;
+  document.getElementById('lm-faturamento').textContent = faturamento.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
 
 function lmRenderInsights(lista) {
@@ -2412,6 +2422,7 @@ function lmRenderizar(lista) {
       +'<td>'+val+'</td>'
       +'<td style="font-weight:700;color:'+(st.dias!==null&&st.dias<0?'#E0383E':st.dias!==null&&st.dias<=5?'#D97706':'#64748B')+'">'+(st.dias===null?'—':st.dias)+'</td>'
       +'<td><span class="'+st.cls+'">'+st.label+'</span></td>'
+      +'<td style="font-weight:700;color:#0F766E;">'+Number(l.valor_mensal||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})+'</td>'
       +'<td style="color:var(--muted);font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(l.obs||'—')+'</td>'
       +'<td style="white-space:nowrap;">'
         +'<button class="btn btn-sm" onclick="lmRenovar(\''+l.id+'\',\''+l.validade+'\')" title="Renovar +30 dias">+30d</button> '
@@ -2450,6 +2461,7 @@ function lmAbrirNovo() {
   document.getElementById('lm-nome').value   = '';
   document.getElementById('lm-obs').value    = '';
   document.getElementById('lm-ativo').value  = 'true';
+  document.getElementById('lm-valor-mensal').value = '';
   document.getElementById('lm-modal-erro').style.display = 'none';
   // Validade padrão: hoje + 30 dias
   const d = new Date(); d.setDate(d.getDate()+30);
@@ -2467,6 +2479,7 @@ function lmEditar(id) {
   document.getElementById('lm-chave').value   = l.chave;
   document.getElementById('lm-validade').value= l.validade;
   document.getElementById('lm-ativo').value   = l.ativo ? 'true' : 'false';
+  document.getElementById('lm-valor-mensal').value = Number(l.valor_mensal || 0).toFixed(2);
   document.getElementById('lm-obs').value     = l.obs || '';
   document.getElementById('lm-modal-erro').style.display = 'none';
   document.getElementById('lm-modal').style.display = 'flex';
@@ -2482,15 +2495,16 @@ async function lmSalvar() {
   const chave  = document.getElementById('lm-chave').value.trim();
   const valid  = document.getElementById('lm-validade').value;
   const ativo  = document.getElementById('lm-ativo').value === 'true';
+  const valorMensal = Math.max(0, Number(document.getElementById('lm-valor-mensal').value || 0));
   const obs    = document.getElementById('lm-obs').value.trim();
   const erroEl = document.getElementById('lm-modal-erro');
   erroEl.style.display='none';
   if (!nome || !chave || !valid) { erroEl.textContent='Preencha nome, chave e validade.'; erroEl.style.display='block'; return; }
   try {
     if (id) {
-      await sbPatch('lm_licencas','id=eq.'+id,{cliente_nome:nome,validade:valid,ativo:ativo,obs:obs||null});
+      await sbPatch('lm_licencas','id=eq.'+id,{cliente_nome:nome,validade:valid,ativo:ativo,valor_mensal:valorMensal,obs:obs||null});
     } else {
-      await sbPost('lm_licencas',{cliente_nome:nome,chave:chave,validade:valid,ativo:ativo,obs:obs||null});
+      await sbPost('lm_licencas',{cliente_nome:nome,chave:chave,validade:valid,ativo:ativo,valor_mensal:valorMensal,obs:obs||null});
     }
     lmFecharModal();
     lmCarregar();
