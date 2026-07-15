@@ -1057,9 +1057,19 @@
           <div><h2>⬆ Atualizações do Legado Mercado</h2><p style="font-size:11px;color:var(--muted);margin-top:4px;">Publique instaladores e acompanhe a adoção das versões.</p></div>
           <div class="actions">
             <span class="lm-update-status" id="lm-update-estado">● Aguardando integração</span>
+            <button class="btn" id="lm-auth-btn" onclick="lmAdminAbrirLogin()">Conectar publicação</button>
+            <button class="btn" id="lm-auth-sair" onclick="lmAdminLogout()" style="display:none;">Sair da publicação</button>
             <button class="btn" onclick="lmAtualizacoesCarregar()">↻ Atualizar</button>
             <button class="btn btn-primary" onclick="lmAbrirPublicacao()">+ Publicar versão</button>
           </div>
+        </div>
+        <div id="lm-auth-box" style="display:none;padding:16px 18px;background:#F8FAFC;border-bottom:1px solid var(--border);">
+          <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(180px,1fr) auto;gap:10px;align-items:end;">
+            <div class="form-row" style="margin:0;"><label>E-mail administrativo</label><input type="email" id="lm-auth-email" autocomplete="username" style="width:100%;" placeholder="seu@email.com"></div>
+            <div class="form-row" style="margin:0;"><label>Senha do Supabase</label><input type="password" id="lm-auth-senha" autocomplete="current-password" style="width:100%;" placeholder="Sua senha segura" onkeydown="if(event.key==='Enter')lmAdminLogin()"></div>
+            <button class="btn btn-primary" onclick="lmAdminLogin()">Conectar</button>
+          </div>
+          <div id="lm-auth-erro" style="display:none;color:var(--danger);font-size:12px;margin-top:9px;"></div>
         </div>
         <div class="lm-release-list" id="lm-release-list">
           <div style="text-align:center;padding:25px;color:var(--muted);font-size:12px;">Nenhuma versão carregada.</div>
@@ -1512,6 +1522,9 @@ const SB_URL = 'https://zzqoxpgidalxjxhgyuot.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94cGdpZGFseGp4aGd5dW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NDI0NjIsImV4cCI6MjA5NzIxODQ2Mn0.FX-9C-u4xjDY1CS8vwOhbfIDPMGmHSbQUFpvxmQ9j5M';
 const SB_HEADS = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 const LM_UPDATE_ADMIN_URL = `${SB_URL}/functions/v1/lm-admin-atualizacoes`;
+let _lmAdminToken = sessionStorage.getItem('lm_admin_access_token') || '';
+let _lmAdminRefreshToken = sessionStorage.getItem('lm_admin_refresh_token') || '';
+let _lmAdminExpiraEm = Number(sessionStorage.getItem('lm_admin_expira_em') || 0);
 
 // Senha de acesso a este painel (troque para algo só seu)
 const SENHA_ADMIN = 'admin-saas-2026';
@@ -2570,15 +2583,91 @@ async function lmExcluir(id, nome) {
 }
 
 async function lmAtualizacaoFn(acao, dados={}) {
+  const token = await lmAdminTokenValido();
+  if(!token) throw new Error('Conecte sua conta administrativa para gerenciar atualizações.');
   const resposta = await fetch(LM_UPDATE_ADMIN_URL, {
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},
-    body:JSON.stringify({acao, senha_admin:_senhaAdminSessao, ...dados})
+    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+token},
+    body:JSON.stringify({acao, ...dados})
   });
   const corpo = await resposta.json().catch(()=>({}));
+  if(resposta.status===401) lmAdminLimparSessao();
   if(!resposta.ok) throw new Error(corpo.erro || corpo.error || 'Serviço de atualização indisponível.');
   return corpo;
 }
+
+function lmAdminAtualizarBotoes() {
+  const conectado = Boolean(_lmAdminToken);
+  const entrar = document.getElementById('lm-auth-btn');
+  const sair = document.getElementById('lm-auth-sair');
+  if(entrar) entrar.style.display = conectado ? 'none' : '';
+  if(sair) sair.style.display = conectado ? '' : 'none';
+}
+
+function lmAdminAbrirLogin() {
+  const box = document.getElementById('lm-auth-box');
+  if(box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+function lmAdminSalvarSessao(sessao) {
+  _lmAdminToken = sessao.access_token || '';
+  _lmAdminRefreshToken = sessao.refresh_token || '';
+  _lmAdminExpiraEm = Math.floor(Date.now()/1000) + Number(sessao.expires_in || 3600);
+  sessionStorage.setItem('lm_admin_access_token', _lmAdminToken);
+  sessionStorage.setItem('lm_admin_refresh_token', _lmAdminRefreshToken);
+  sessionStorage.setItem('lm_admin_expira_em', String(_lmAdminExpiraEm));
+  lmAdminAtualizarBotoes();
+}
+
+function lmAdminLimparSessao() {
+  _lmAdminToken=''; _lmAdminRefreshToken=''; _lmAdminExpiraEm=0;
+  sessionStorage.removeItem('lm_admin_access_token');
+  sessionStorage.removeItem('lm_admin_refresh_token');
+  sessionStorage.removeItem('lm_admin_expira_em');
+  lmAdminAtualizarBotoes();
+}
+
+async function lmAdminLogin() {
+  const email = document.getElementById('lm-auth-email').value.trim();
+  const senhaEl = document.getElementById('lm-auth-senha');
+  const erro = document.getElementById('lm-auth-erro');
+  erro.style.display='none';
+  try {
+    const resposta = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
+      method:'POST', headers:{'Content-Type':'application/json','apikey':SB_KEY},
+      body:JSON.stringify({email,password:senhaEl.value})
+    });
+    const corpo = await resposta.json().catch(()=>({}));
+    senhaEl.value='';
+    if(!resposta.ok || !corpo.access_token) throw new Error(corpo.error_description || corpo.msg || 'E-mail ou senha inválidos.');
+    lmAdminSalvarSessao(corpo);
+    document.getElementById('lm-auth-box').style.display='none';
+    await lmAtualizacoesCarregar();
+  } catch(e) { erro.textContent=e.message; erro.style.display='block'; }
+}
+
+async function lmAdminTokenValido() {
+  if(_lmAdminToken && _lmAdminExpiraEm > Math.floor(Date.now()/1000)+60) return _lmAdminToken;
+  if(!_lmAdminRefreshToken) return '';
+  try {
+    const resposta = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method:'POST', headers:{'Content-Type':'application/json','apikey':SB_KEY},
+      body:JSON.stringify({refresh_token:_lmAdminRefreshToken})
+    });
+    const corpo = await resposta.json().catch(()=>({}));
+    if(!resposta.ok || !corpo.access_token) throw new Error('Sessão expirada');
+    lmAdminSalvarSessao(corpo);
+    return _lmAdminToken;
+  } catch(e) { lmAdminLimparSessao(); return ''; }
+}
+
+function lmAdminLogout() {
+  lmAdminLimparSessao();
+  const estado=document.getElementById('lm-update-estado');
+  if(estado) estado.textContent='● Publicação desconectada';
+}
+
+lmAdminAtualizarBotoes();
 
 async function lmAtualizacoesCarregar() {
   const estado = document.getElementById('lm-update-estado');
