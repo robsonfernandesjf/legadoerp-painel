@@ -1052,30 +1052,6 @@
         </div>
       </div>
 
-      <div class="section-card" style="margin-top:18px;">
-        <div class="section-card-header lm-update-head">
-          <div><h2>⬆ Atualizações do Legado Mercado</h2><p style="font-size:11px;color:var(--muted);margin-top:4px;">Publique instaladores e acompanhe a adoção das versões.</p></div>
-          <div class="actions">
-            <span class="lm-update-status" id="lm-update-estado">● Aguardando integração</span>
-            <button class="btn" id="lm-auth-btn" onclick="lmAdminAbrirLogin()">Conectar publicação</button>
-            <button class="btn" id="lm-auth-sair" onclick="lmAdminLogout()" style="display:none;">Sair da publicação</button>
-            <button class="btn" onclick="lmAtualizacoesCarregar()">↻ Atualizar</button>
-            <button class="btn btn-primary" onclick="lmAbrirPublicacao()">+ Publicar versão</button>
-          </div>
-        </div>
-        <div id="lm-auth-box" style="display:none;padding:16px 18px;background:#F8FAFC;border-bottom:1px solid var(--border);">
-          <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(180px,1fr) auto;gap:10px;align-items:end;">
-            <div class="form-row" style="margin:0;"><label>E-mail administrativo</label><input type="email" id="lm-auth-email" autocomplete="username" style="width:100%;" placeholder="seu@email.com"></div>
-            <div class="form-row" style="margin:0;"><label>Senha do Supabase</label><input type="password" id="lm-auth-senha" autocomplete="current-password" style="width:100%;" placeholder="Sua senha segura" onkeydown="if(event.key==='Enter')lmAdminLogin()"></div>
-            <button class="btn btn-primary" onclick="lmAdminLogin()">Conectar</button>
-          </div>
-          <div id="lm-auth-erro" style="display:none;color:var(--danger);font-size:12px;margin-top:9px;"></div>
-        </div>
-        <div class="lm-release-list" id="lm-release-list">
-          <div style="text-align:center;padding:25px;color:var(--muted);font-size:12px;">Nenhuma versão carregada.</div>
-        </div>
-      </div>
-
       <!-- ══ TABELAS FISCAIS ══ -->
       <div class="section-card" style="margin-top:24px;">
         <div class="section-card-header">
@@ -1180,6 +1156,30 @@
           <tbody id="lm-tbody"></tbody>
         </table>
         <p id="lm-vazia" style="display:none;text-align:center;padding:32px;color:var(--muted);font-size:13px;">Nenhum cliente cadastrado ainda.</p>
+      </div>
+
+      <div class="section-card" style="margin-top:18px;">
+        <div class="section-card-header lm-update-head">
+          <div><h2>⬆ Atualizações do Legado Mercado</h2><p style="font-size:11px;color:var(--muted);margin-top:4px;">Publique instaladores e acompanhe a adoção das versões.</p></div>
+          <div class="actions">
+            <span class="lm-update-status" id="lm-update-estado">● Aguardando integração</span>
+            <button class="btn" id="lm-auth-btn" onclick="lmAdminAbrirLogin()">Conectar publicação</button>
+            <button class="btn" id="lm-auth-sair" onclick="lmAdminLogout()" style="display:none;">Sair da publicação</button>
+            <button class="btn" onclick="lmAtualizacoesCarregar()">↻ Atualizar</button>
+            <button class="btn btn-primary" onclick="lmAbrirPublicacao()">+ Publicar versão</button>
+          </div>
+        </div>
+        <div id="lm-auth-box" style="display:none;padding:16px 18px;background:#F8FAFC;border-bottom:1px solid var(--border);">
+          <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(180px,1fr) auto;gap:10px;align-items:end;">
+            <div class="form-row" style="margin:0;"><label>E-mail administrativo</label><input type="email" id="lm-auth-email" autocomplete="username" style="width:100%;" placeholder="seu@email.com"></div>
+            <div class="form-row" style="margin:0;"><label>Senha do Supabase</label><input type="password" id="lm-auth-senha" autocomplete="current-password" style="width:100%;" placeholder="Sua senha segura" onkeydown="if(event.key==='Enter')lmAdminLogin()"></div>
+            <button class="btn btn-primary" onclick="lmAdminLogin()">Conectar</button>
+          </div>
+          <div id="lm-auth-erro" style="display:none;color:var(--danger);font-size:12px;margin-top:9px;"></div>
+        </div>
+        <div class="lm-release-list" id="lm-release-list">
+          <div style="text-align:center;padding:25px;color:var(--muted);font-size:12px;">Nenhuma versão carregada.</div>
+        </div>
       </div>
 
     </div><!-- /lm-painel -->
