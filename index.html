@@ -879,23 +879,6 @@
   .lm-badge-vence   { background:#FEF3E7; color:#F2994A; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
   .lm-badge-vencido { background:#FDECEC; color:#E0383E; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
   .lm-badge-inativo { background:#F3F4F6; color:#6B7280; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
-  .lm-hero { background:linear-gradient(135deg,#071426,#0F2745); color:#fff; border-radius:18px; padding:22px 24px; margin-bottom:18px; display:flex; justify-content:space-between; gap:20px; align-items:center; box-shadow:0 16px 34px rgba(7,20,38,.16); }
-  .lm-hero h2 { font-size:20px; margin:0 0 5px; } .lm-hero p { color:#9CB2CD; font-size:12px; margin:0; }
-  .lm-hero .lm-sync { border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:#fff; }
-  .lm-card { position:relative; overflow:hidden; box-shadow:0 8px 22px rgba(15,23,42,.05); }
-  .lm-card::after { content:""; position:absolute; right:-18px; top:-22px; width:66px; height:66px; border-radius:50%; background:var(--lm-glow,#E8F2FF); opacity:.7; }
-  .lm-card .li { position:absolute; right:14px; bottom:12px; font-size:18px; opacity:.38; }
-  .lm-toolbar { display:flex; gap:9px; flex-wrap:wrap; align-items:center; }
-  .lm-toolbar input { min-width:220px; }
-  .lm-toolbar select { min-width:150px; }
-  .lm-insights { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(260px,.7fr); gap:16px; margin-bottom:18px; }
-  .lm-chart-card,.lm-alert-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:18px; }
-  .lm-alert-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; max-height:160px; overflow:auto; }
-  .lm-alert-item { display:flex; justify-content:space-between; gap:10px; padding:9px 10px; background:#FFF8ED; border-radius:8px; font-size:12px; }
-  .lm-chave-btn { border:0; cursor:pointer; font-family:monospace; font-size:11px; background:#F3F4F6; padding:4px 8px; border-radius:6px; color:#334155; }
-  .lm-update-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.lm-update-status{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;background:#FFF7ED;color:#C2410C;font-size:11px;font-weight:700}.lm-release-list{display:grid;gap:10px;padding:16px}.lm-release{display:grid;grid-template-columns:110px minmax(180px,1fr) 120px 110px auto;gap:14px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:13px 14px;background:#fff}.lm-release-version{font-weight:800;color:#0F766E}.lm-release small{display:block;color:var(--muted);margin-top:3px}.lm-progress{height:8px;background:#E5E7EB;border-radius:99px;overflow:hidden;margin-top:8px}.lm-progress span{display:block;height:100%;width:0;background:#16A34A;transition:width .2s}
-  @media(max-width:850px){.lm-insights{grid-template-columns:1fr}.lm-hero{align-items:flex-start;flex-direction:column}.lm-toolbar input,.lm-toolbar select{width:100%;}}
-  @media(max-width:850px){.lm-release{grid-template-columns:1fr 1fr}.lm-release .lm-release-notes{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -1112,31 +1095,18 @@
     <!-- ══ LEGADO MERCADO ══ -->
     <div id="lm-painel" style="display:none;">
 
-      <div class="lm-hero">
-        <div><h2>🛒 Gestão Legado Mercado</h2><p>Licenças, vencimentos e clientes do aplicativo local em uma única visão.</p></div>
-        <button class="btn lm-sync" onclick="lmCarregar()">↻ Sincronizar licenças</button>
-      </div>
-
       <div class="lm-cards" id="lm-cards-resumo">
-        <div class="lm-card" style="--lm-glow:#DBEAFE"><div class="lv" id="lm-total">—</div><div class="ll">Total de clientes</div><span class="li">👥</span></div>
-        <div class="lm-card" style="--lm-glow:#D1FAE5"><div class="lv" id="lm-ativos" style="color:#16A34A;">—</div><div class="ll">Licenças regulares</div><span class="li">✓</span></div>
-        <div class="lm-card" style="--lm-glow:#FEF3C7"><div class="lv" id="lm-vencendo" style="color:#D97706;">—</div><div class="ll">Vencem em até 5 dias</div><span class="li">⏳</span></div>
-        <div class="lm-card" style="--lm-glow:#FEE2E2"><div class="lv" id="lm-vencidos" style="color:#E0383E;">—</div><div class="ll">Vencidas / inativas</div><span class="li">!</span></div>
-        <div class="lm-card" style="--lm-glow:#EDE9FE"><div class="lv" id="lm-renovacao" style="color:#7C3AED;">—</div><div class="ll">Renovação necessária</div><span class="li">↻</span></div>
-        <div class="lm-card" style="--lm-glow:#CCFBF1"><div class="lv" id="lm-faturamento" style="color:#0F766E;font-size:21px;">—</div><div class="ll">Faturamento mensal previsto</div><span class="li">R$</span></div>
-      </div>
-
-      <div class="lm-insights">
-        <div class="lm-chart-card"><div style="font-size:13px;font-weight:700;margin-bottom:8px;">Vencimentos — próximos 6 meses</div><canvas id="lm-chart-vencimentos" height="72"></canvas></div>
-        <div class="lm-alert-card"><div style="font-size:13px;font-weight:700;">Prioridade de atendimento</div><div style="font-size:11px;color:var(--muted);margin-top:3px;">Licenças vencidas ou próximas do vencimento.</div><div class="lm-alert-list" id="lm-alertas"></div></div>
+        <div class="lm-card"><div class="lv" id="lm-total">—</div><div class="ll">Total de clientes</div></div>
+        <div class="lm-card"><div class="lv" id="lm-ativos" style="color:#16A34A;">—</div><div class="ll">Licenças ativas</div></div>
+        <div class="lm-card"><div class="lv" id="lm-vencendo" style="color:#F2994A;">—</div><div class="ll">Vencem em 7 dias</div></div>
+        <div class="lm-card"><div class="lv" id="lm-vencidos" style="color:#E0383E;">—</div><div class="ll">Vencidas / inativas</div></div>
       </div>
 
       <div class="section-card">
         <div class="section-card-header">
           <h2>🛒 Clientes Legado Mercado</h2>
-          <div class="actions lm-toolbar">
-            <input type="text" id="lm-busca" placeholder="Buscar cliente ou chave..." oninput="lmFiltrar()">
-            <select id="lm-filtro-status" onchange="lmFiltrar()"><option value="">Todas as situações</option><option value="ativo">Regulares</option><option value="vencendo">Vencendo</option><option value="vencido">Vencidas</option><option value="inativo">Inativas</option></select>
+          <div class="actions">
+            <input type="text" id="lm-busca" placeholder="Buscar cliente..." style="width:200px;" oninput="lmFiltrar()">
             <button class="btn btn-primary" onclick="lmAbrirNovo()">+ Novo cliente</button>
           </div>
         </div>
@@ -1145,41 +1115,15 @@
             <tr>
               <th>Cliente</th>
               <th>Chave</th>
-               <th>Validade</th>
-               <th>Dias</th>
-               <th>Status</th>
-               <th>Mensalidade</th>
-               <th>Obs</th>
+              <th>Validade</th>
+              <th>Status</th>
+              <th>Obs</th>
               <th>Ações</th>
             </tr>
           </thead>
           <tbody id="lm-tbody"></tbody>
         </table>
         <p id="lm-vazia" style="display:none;text-align:center;padding:32px;color:var(--muted);font-size:13px;">Nenhum cliente cadastrado ainda.</p>
-      </div>
-
-      <div class="section-card" style="margin-top:18px;">
-        <div class="section-card-header lm-update-head">
-          <div><h2>⬆ Atualizações do Legado Mercado</h2><p style="font-size:11px;color:var(--muted);margin-top:4px;">Publique instaladores e acompanhe a adoção das versões.</p></div>
-          <div class="actions">
-            <span class="lm-update-status" id="lm-update-estado">● Aguardando integração</span>
-            <button class="btn" id="lm-auth-btn" onclick="lmAdminAbrirLogin()">Conectar publicação</button>
-            <button class="btn" id="lm-auth-sair" onclick="lmAdminLogout()" style="display:none;">Sair da publicação</button>
-            <button class="btn" onclick="lmAtualizacoesCarregar()">↻ Atualizar</button>
-            <button class="btn btn-primary" onclick="lmAbrirPublicacao()">+ Publicar versão</button>
-          </div>
-        </div>
-        <div id="lm-auth-box" style="display:none;padding:16px 18px;background:#F8FAFC;border-bottom:1px solid var(--border);">
-          <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(180px,1fr) auto;gap:10px;align-items:end;">
-            <div class="form-row" style="margin:0;"><label>E-mail administrativo</label><input type="email" id="lm-auth-email" autocomplete="username" style="width:100%;" placeholder="seu@email.com"></div>
-            <div class="form-row" style="margin:0;"><label>Senha do Supabase</label><input type="password" id="lm-auth-senha" autocomplete="current-password" style="width:100%;" placeholder="Sua senha segura" onkeydown="if(event.key==='Enter')lmAdminLogin()"></div>
-            <button class="btn btn-primary" onclick="lmAdminLogin()">Conectar</button>
-          </div>
-          <div id="lm-auth-erro" style="display:none;color:var(--danger);font-size:12px;margin-top:9px;"></div>
-        </div>
-        <div class="lm-release-list" id="lm-release-list">
-          <div style="text-align:center;padding:25px;color:var(--muted);font-size:12px;">Nenhuma versão carregada.</div>
-        </div>
       </div>
 
     </div><!-- /lm-painel -->
@@ -1246,6 +1190,10 @@
         <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;margin-top:8px;">
           <input type="checkbox" id="loja-usa-consignado" style="width:auto;margin:0;">
           📦 Habilitar Consignado
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;margin-top:8px;">
+          <input type="checkbox" id="loja-usa-marketing" style="width:auto;margin:0;">
+          🚀 Habilitar Marketing IA (campanhas com IA no Meta Ads)
         </label>
         <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;margin-top:8px;">
           <input type="checkbox" id="loja-usa-catalogo" style="width:auto;margin:0;" onchange="document.getElementById('loja-catalogo-whats-wrap').style.display=this.checked?'block':'none'">
@@ -1475,11 +1423,6 @@
       <input type="date" id="lm-validade" style="width:100%;">
     </div>
     <div class="form-row">
-      <label>Valor mensal (R$)</label>
-      <input type="number" id="lm-valor-mensal" min="0" step="0.01" placeholder="Ex.: 99,90" style="width:100%;">
-      <div style="font-size:11px;color:var(--muted);margin-top:5px;">Usado apenas para a previsão de faturamento do Legado Mercado.</div>
-    </div>
-    <div class="form-row">
       <label>Ativo</label>
       <select id="lm-ativo" style="width:100%;">
         <option value="true">Sim</option>
@@ -1498,22 +1441,6 @@
   </div>
 </div>
 
-<div class="modal-bg" id="lm-update-modal" style="display:none;align-items:center;justify-content:center;">
-  <div class="modal-box" style="max-width:560px;width:100%;">
-    <h2>Publicar atualização</h2>
-    <div class="form-row"><label>Versão *</label><input type="text" id="lm-up-versao" placeholder="Ex.: 1.0.1" style="width:100%;"></div>
-    <div class="form-row"><label>Instalador *</label><input type="file" id="lm-up-arquivo" accept=".exe" style="width:100%;"></div>
-    <div class="form-row"><label>Alterações</label><textarea id="lm-up-alteracoes" rows="4" placeholder="Descreva as melhorias desta versão..." style="width:100%;resize:vertical;"></textarea></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="form-row"><label>Liberação inicial</label><select id="lm-up-percentual" style="width:100%;"><option value="0">Somente rascunho</option><option value="10">10% das instalações</option><option value="50">50% das instalações</option><option value="100">Todos os clientes</option></select></div>
-      <div class="form-row"><label>Tipo</label><select id="lm-up-obrigatoria" style="width:100%;"><option value="false">Atualização normal</option><option value="true">Atualização obrigatória</option></select></div>
-    </div>
-    <div id="lm-up-andamento" style="display:none;background:#F0FDF4;border:1px solid #BBF7D0;padding:12px;border-radius:9px;font-size:12px;color:#166534;"><span id="lm-up-texto">Preparando...</span><div class="lm-progress"><span id="lm-up-barra"></span></div></div>
-    <p id="lm-up-erro" style="display:none;color:var(--danger);font-size:12px;margin-top:10px;"></p>
-    <div class="modal-actions"><button class="btn" onclick="lmFecharPublicacao()">Cancelar</button><button class="btn btn-primary" id="lm-up-publicar" onclick="lmPublicarVersao()">Publicar</button></div>
-  </div>
-</div>
-
 <script>
 // =====================================================================
 // CONFIGURAÇÃO — mesmo Supabase usado pelas lojas (multi-tenant)
@@ -1521,10 +1448,6 @@
 const SB_URL = 'https://zzqoxpgidalxjxhgyuot.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6cW94cGdpZGFseGp4aGd5dW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NDI0NjIsImV4cCI6MjA5NzIxODQ2Mn0.FX-9C-u4xjDY1CS8vwOhbfIDPMGmHSbQUFpvxmQ9j5M';
 const SB_HEADS = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
-const LM_UPDATE_ADMIN_URL = `${SB_URL}/functions/v1/lm-admin-atualizacoes`;
-let _lmAdminToken = sessionStorage.getItem('lm_admin_access_token') || '';
-let _lmAdminRefreshToken = sessionStorage.getItem('lm_admin_refresh_token') || '';
-let _lmAdminExpiraEm = Number(sessionStorage.getItem('lm_admin_expira_em') || 0);
 
 // Senha de acesso a este painel (troque para algo só seu)
 const SENHA_ADMIN = 'admin-saas-2026';
@@ -1920,6 +1843,7 @@ function abrirModalEditarLoja(id) {
   document.getElementById('loja-usa-catalogo').checked = !!loja.usa_catalogo;
   document.getElementById('loja-usa-crediario').checked = !!loja.usa_crediario;
   document.getElementById('loja-usa-consignado').checked = !!loja.usa_consignado;
+  document.getElementById('loja-usa-marketing').checked = !!loja.usa_marketing;
   document.getElementById('loja-catalogo-whats').value = loja.catalogo_whatsapp || '';
   document.getElementById('loja-catalogo-whats-wrap').style.display = loja.usa_catalogo ? 'block' : 'none';
   document.getElementById('loja-banner-url').value = loja.catalogo_banner_url || '';
@@ -2026,6 +1950,7 @@ async function salvarLoja() {
     usa_catalogo: document.getElementById('loja-usa-catalogo').checked,
     usa_crediario: document.getElementById('loja-usa-crediario').checked,
     usa_consignado: document.getElementById('loja-usa-consignado').checked,
+    usa_marketing: document.getElementById('loja-usa-marketing').checked,
     catalogo_whatsapp: document.getElementById('loja-catalogo-whats').value.trim(),
     catalogo_banner_url: document.getElementById('loja-banner-url').value || null,
     observacoes: document.getElementById('loja-obs').value.trim(),
@@ -2375,7 +2300,6 @@ async function carregarPreviewCST() {
 // LEGADO MERCADO — gestão de licenças
 // =====================================================================
 let _lmLicencas = [];
-let _lmChart = null;
 
 function trocarSecao(secao) {
   const erp     = document.getElementById('conteudo');
@@ -2401,58 +2325,36 @@ async function lmCarregar() {
     _lmLicencas = await sbGet('lm_licencas', 'order=criado_em.desc');
     lmRenderizar(_lmLicencas);
     lmAtualizarCards(_lmLicencas);
-    lmRenderInsights(_lmLicencas);
-    lmAtualizacoesCarregar();
   } catch(e) {
     console.error('Legado Mercado:', e);
   }
 }
 
 function lmStatus(lic) {
-  if (!lic.ativo) return { key:'inativo', label:'Inativo', cls:'lm-badge-inativo', dias:null };
+  if (!lic.ativo) return { label:'Inativo', cls:'lm-badge-inativo' };
   const hoje  = new Date(); hoje.setHours(0,0,0,0);
   const valid = new Date(lic.validade + 'T00:00:00');
   const diff  = Math.ceil((valid - hoje) / 86400000);
-  if (diff < 0)  return { key:'vencido', label:'Vencida', cls:'lm-badge-vencido', dias:diff };
-  if (diff <= 5) return { key:'vencendo', label:diff===0?'Vence hoje':'Vence em '+diff+'d', cls:'lm-badge-vence', dias:diff };
-  return { key:'ativo', label:'Regular', cls:'lm-badge-ativo', dias:diff };
+  if (diff < 0)  return { label:'Vencida',         cls:'lm-badge-vencido' };
+  if (diff <= 7) return { label:'Vence em '+diff+'d', cls:'lm-badge-vence' };
+  return { label:'Ativo', cls:'lm-badge-ativo' };
 }
 
 function lmAtualizarCards(lista) {
   const hoje   = new Date(); hoje.setHours(0,0,0,0);
   let ativos=0, vencendo=0, vencidos=0;
-  let faturamento=0;
   lista.forEach(function(l) {
     if (!l.ativo) { vencidos++; return; }
     const valid = new Date(l.validade+'T00:00:00');
     const diff  = Math.ceil((valid - hoje) / 86400000);
     if (diff < 0)       vencidos++;
-    else if (diff <= 5) vencendo++;
+    else if (diff <= 7) vencendo++;
     else                ativos++;
-    if (diff >= 0) faturamento += Number(l.valor_mensal || 0);
   });
   document.getElementById('lm-total').textContent   = lista.length;
   document.getElementById('lm-ativos').textContent  = ativos;
   document.getElementById('lm-vencendo').textContent= vencendo;
   document.getElementById('lm-vencidos').textContent = vencidos;
-  document.getElementById('lm-renovacao').textContent = vencendo + vencidos;
-  document.getElementById('lm-faturamento').textContent = faturamento.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-}
-
-function lmRenderInsights(lista) {
-  const alertas = lista.map(l=>({lic:l, st:lmStatus(l)}))
-    .filter(x=>['vencido','vencendo','inativo'].includes(x.st.key))
-    .sort((a,b)=>(a.st.dias??-999)-(b.st.dias??-999)).slice(0,8);
-  document.getElementById('lm-alertas').innerHTML = alertas.length ? alertas.map(x=>
-    '<div class="lm-alert-item"><span><b>'+escHtml(x.lic.cliente_nome)+'</b><br><small>'+x.st.label+'</small></span><button class="btn btn-sm" onclick="lmEditar(\''+x.lic.id+'\')">Abrir</button></div>'
-  ).join('') : '<div style="font-size:12px;color:#16A34A;padding:12px;background:#ECFDF5;border-radius:8px;">✓ Nenhuma renovação urgente.</div>';
-
-  const meses=[]; const valores=[]; const base=new Date(); base.setDate(1); base.setHours(0,0,0,0);
-  for(let i=0;i<6;i++){ const d=new Date(base.getFullYear(),base.getMonth()+i,1); meses.push(d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'})); valores.push(0); }
-  lista.forEach(l=>{ if(!l.validade) return; const d=new Date(l.validade+'T00:00:00'); const idx=(d.getFullYear()-base.getFullYear())*12+d.getMonth()-base.getMonth(); if(idx>=0&&idx<6) valores[idx]++; });
-  const canvas=document.getElementById('lm-chart-vencimentos');
-  if(_lmChart) _lmChart.destroy();
-  if(typeof Chart!=='undefined') _lmChart=new Chart(canvas,{type:'bar',data:{labels:meses,datasets:[{data:valores,backgroundColor:'#16A34A',borderRadius:7,maxBarThickness:44}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0},grid:{color:'#EEF2F7'}},x:{grid:{display:false}}}}});
 }
 
 function lmRenderizar(lista) {
@@ -2465,15 +2367,12 @@ function lmRenderizar(lista) {
     const val = l.validade ? new Date(l.validade+'T00:00:00').toLocaleDateString('pt-BR') : '—';
     return '<tr>'
       +'<td style="font-weight:600;">'+escHtml(l.cliente_nome)+'</td>'
-      +'<td><button class="lm-chave-btn" onclick="lmCopiarChave(\''+escHtml(l.chave)+'\',this)" title="Copiar chave">'+escHtml(l.chave)+' ⧉</button></td>'
+      +'<td><code style="font-size:11px;background:#F3F4F6;padding:2px 7px;border-radius:5px;">'+escHtml(l.chave)+'</code></td>'
       +'<td>'+val+'</td>'
-      +'<td style="font-weight:700;color:'+(st.dias!==null&&st.dias<0?'#E0383E':st.dias!==null&&st.dias<=5?'#D97706':'#64748B')+'">'+(st.dias===null?'—':st.dias)+'</td>'
       +'<td><span class="'+st.cls+'">'+st.label+'</span></td>'
-      +'<td style="font-weight:700;color:#0F766E;">'+Number(l.valor_mensal||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})+'</td>'
       +'<td style="color:var(--muted);font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(l.obs||'—')+'</td>'
       +'<td style="white-space:nowrap;">'
         +'<button class="btn btn-sm" onclick="lmRenovar(\''+l.id+'\',\''+l.validade+'\')" title="Renovar +30 dias">+30d</button> '
-        +'<button class="btn btn-sm" onclick="lmRenovar(\''+l.id+'\',\''+l.validade+'\',90)" title="Renovar +90 dias">+90d</button> '
         +'<button class="btn btn-sm" onclick="lmEditar(\''+l.id+'\')" title="Editar">✏</button> '
         +'<button class="btn btn-sm btn-danger" onclick="lmExcluir(\''+l.id+'\',\''+escHtml(l.cliente_nome)+'\')" title="Excluir">✕</button>'
       +'</td>'
@@ -2483,16 +2382,9 @@ function lmRenderizar(lista) {
 
 function lmFiltrar() {
   const q = document.getElementById('lm-busca').value.toLowerCase();
-  const status = document.getElementById('lm-filtro-status').value;
   lmRenderizar(_lmLicencas.filter(function(l) {
-    const texto = l.cliente_nome.toLowerCase().includes(q) || l.chave.toLowerCase().includes(q);
-    return texto && (!status || lmStatus(l).key===status);
+    return l.cliente_nome.toLowerCase().includes(q) || l.chave.toLowerCase().includes(q);
   }));
-}
-
-async function lmCopiarChave(chave, botao) {
-  try { await navigator.clipboard.writeText(chave); const antigo=botao.textContent; botao.textContent='Copiada ✓'; setTimeout(()=>botao.textContent=antigo,1200); }
-  catch(e) { prompt('Copie a chave:',chave); }
 }
 
 function lmGerarChave() {
@@ -2508,7 +2400,6 @@ function lmAbrirNovo() {
   document.getElementById('lm-nome').value   = '';
   document.getElementById('lm-obs').value    = '';
   document.getElementById('lm-ativo').value  = 'true';
-  document.getElementById('lm-valor-mensal').value = '';
   document.getElementById('lm-modal-erro').style.display = 'none';
   // Validade padrão: hoje + 30 dias
   const d = new Date(); d.setDate(d.getDate()+30);
@@ -2526,7 +2417,6 @@ function lmEditar(id) {
   document.getElementById('lm-chave').value   = l.chave;
   document.getElementById('lm-validade').value= l.validade;
   document.getElementById('lm-ativo').value   = l.ativo ? 'true' : 'false';
-  document.getElementById('lm-valor-mensal').value = Number(l.valor_mensal || 0).toFixed(2);
   document.getElementById('lm-obs').value     = l.obs || '';
   document.getElementById('lm-modal-erro').style.display = 'none';
   document.getElementById('lm-modal').style.display = 'flex';
@@ -2542,16 +2432,15 @@ async function lmSalvar() {
   const chave  = document.getElementById('lm-chave').value.trim();
   const valid  = document.getElementById('lm-validade').value;
   const ativo  = document.getElementById('lm-ativo').value === 'true';
-  const valorMensal = Math.max(0, Number(document.getElementById('lm-valor-mensal').value || 0));
   const obs    = document.getElementById('lm-obs').value.trim();
   const erroEl = document.getElementById('lm-modal-erro');
   erroEl.style.display='none';
   if (!nome || !chave || !valid) { erroEl.textContent='Preencha nome, chave e validade.'; erroEl.style.display='block'; return; }
   try {
     if (id) {
-      await sbPatch('lm_licencas','id=eq.'+id,{cliente_nome:nome,validade:valid,ativo:ativo,valor_mensal:valorMensal,obs:obs||null});
+      await sbPatch('lm_licencas','id=eq.'+id,{cliente_nome:nome,validade:valid,ativo:ativo,obs:obs||null});
     } else {
-      await sbPost('lm_licencas',{cliente_nome:nome,chave:chave,validade:valid,ativo:ativo,valor_mensal:valorMensal,obs:obs||null});
+      await sbPost('lm_licencas',{cliente_nome:nome,chave:chave,validade:valid,ativo:ativo,obs:obs||null});
     }
     lmFecharModal();
     lmCarregar();
@@ -2561,13 +2450,13 @@ async function lmSalvar() {
   }
 }
 
-async function lmRenovar(id, validadeAtual, dias=30) {
+async function lmRenovar(id, validadeAtual) {
   const base = validadeAtual && new Date(validadeAtual+'T00:00:00') > new Date()
     ? new Date(validadeAtual+'T00:00:00')
     : new Date();
-  base.setDate(base.getDate()+dias);
+  base.setDate(base.getDate()+30);
   const novaData = base.toISOString().split('T')[0];
-  if (!confirm('Renovar por '+dias+' dias? Nova validade: '+new Date(novaData+'T00:00:00').toLocaleDateString('pt-BR'))) return;
+  if (!confirm('Renovar por 30 dias? Nova validade: '+new Date(novaData+'T00:00:00').toLocaleDateString('pt-BR'))) return;
   try {
     await sbPatch('lm_licencas','id=eq.'+id,{validade:novaData,ativo:true});
     lmCarregar();
@@ -2580,160 +2469,6 @@ async function lmExcluir(id, nome) {
     await sbDelete('lm_licencas','id=eq.'+id);
     lmCarregar();
   } catch(e) { alert('Erro: '+e.message); }
-}
-
-async function lmAtualizacaoFn(acao, dados={}) {
-  const token = await lmAdminTokenValido();
-  if(!token) throw new Error('Conecte sua conta administrativa para gerenciar atualizações.');
-  const resposta = await fetch(LM_UPDATE_ADMIN_URL, {
-    method:'POST',
-    headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+token},
-    body:JSON.stringify({acao, ...dados})
-  });
-  const corpo = await resposta.json().catch(()=>({}));
-  if(resposta.status===401) lmAdminLimparSessao();
-  if(!resposta.ok) throw new Error(corpo.erro || corpo.error || 'Serviço de atualização indisponível.');
-  return corpo;
-}
-
-function lmAdminAtualizarBotoes() {
-  const conectado = Boolean(_lmAdminToken);
-  const entrar = document.getElementById('lm-auth-btn');
-  const sair = document.getElementById('lm-auth-sair');
-  if(entrar) entrar.style.display = conectado ? 'none' : '';
-  if(sair) sair.style.display = conectado ? '' : 'none';
-}
-
-function lmAdminAbrirLogin() {
-  const box = document.getElementById('lm-auth-box');
-  if(box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
-}
-
-function lmAdminSalvarSessao(sessao) {
-  _lmAdminToken = sessao.access_token || '';
-  _lmAdminRefreshToken = sessao.refresh_token || '';
-  _lmAdminExpiraEm = Math.floor(Date.now()/1000) + Number(sessao.expires_in || 3600);
-  sessionStorage.setItem('lm_admin_access_token', _lmAdminToken);
-  sessionStorage.setItem('lm_admin_refresh_token', _lmAdminRefreshToken);
-  sessionStorage.setItem('lm_admin_expira_em', String(_lmAdminExpiraEm));
-  lmAdminAtualizarBotoes();
-}
-
-function lmAdminLimparSessao() {
-  _lmAdminToken=''; _lmAdminRefreshToken=''; _lmAdminExpiraEm=0;
-  sessionStorage.removeItem('lm_admin_access_token');
-  sessionStorage.removeItem('lm_admin_refresh_token');
-  sessionStorage.removeItem('lm_admin_expira_em');
-  lmAdminAtualizarBotoes();
-}
-
-async function lmAdminLogin() {
-  const email = document.getElementById('lm-auth-email').value.trim();
-  const senhaEl = document.getElementById('lm-auth-senha');
-  const erro = document.getElementById('lm-auth-erro');
-  erro.style.display='none';
-  try {
-    const resposta = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
-      method:'POST', headers:{'Content-Type':'application/json','apikey':SB_KEY},
-      body:JSON.stringify({email,password:senhaEl.value})
-    });
-    const corpo = await resposta.json().catch(()=>({}));
-    senhaEl.value='';
-    if(!resposta.ok || !corpo.access_token) throw new Error(corpo.error_description || corpo.msg || 'E-mail ou senha inválidos.');
-    lmAdminSalvarSessao(corpo);
-    document.getElementById('lm-auth-box').style.display='none';
-    await lmAtualizacoesCarregar();
-  } catch(e) { erro.textContent=e.message; erro.style.display='block'; }
-}
-
-async function lmAdminTokenValido() {
-  if(_lmAdminToken && _lmAdminExpiraEm > Math.floor(Date.now()/1000)+60) return _lmAdminToken;
-  if(!_lmAdminRefreshToken) return '';
-  try {
-    const resposta = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
-      method:'POST', headers:{'Content-Type':'application/json','apikey':SB_KEY},
-      body:JSON.stringify({refresh_token:_lmAdminRefreshToken})
-    });
-    const corpo = await resposta.json().catch(()=>({}));
-    if(!resposta.ok || !corpo.access_token) throw new Error('Sessão expirada');
-    lmAdminSalvarSessao(corpo);
-    return _lmAdminToken;
-  } catch(e) { lmAdminLimparSessao(); return ''; }
-}
-
-function lmAdminLogout() {
-  lmAdminLimparSessao();
-  const estado=document.getElementById('lm-update-estado');
-  if(estado) estado.textContent='● Publicação desconectada';
-}
-
-lmAdminAtualizarBotoes();
-
-async function lmAtualizacoesCarregar() {
-  const estado = document.getElementById('lm-update-estado');
-  const lista = document.getElementById('lm-release-list');
-  if(!estado || !lista) return;
-  estado.textContent='● Sincronizando...'; estado.style.background='#EFF6FF'; estado.style.color='#1D4ED8';
-  try {
-    const dados = await lmAtualizacaoFn('listar');
-    const versoes = dados.versoes || [];
-    estado.textContent='● Integração ativa'; estado.style.background='#ECFDF5'; estado.style.color='#047857';
-    if(!versoes.length){lista.innerHTML='<div style="text-align:center;padding:25px;color:var(--muted);font-size:12px;">Nenhuma atualização publicada.</div>';return;}
-    lista.innerHTML=versoes.map(v=>{
-      const data=v.publicado_em?new Date(v.publicado_em).toLocaleDateString('pt-BR'):'Rascunho';
-      const tamanho=Number(v.tamanho_bytes||0)/1048576;
-      const status=v.publicada?'<span class="lm-badge-ativo">Publicada</span>':'<span class="lm-badge-inativo">Rascunho</span>';
-      return '<div class="lm-release"><div><div class="lm-release-version">v'+escHtml(v.versao)+'</div><small>'+data+'</small></div>'+
-        '<div class="lm-release-notes"><b>'+(v.obrigatoria?'Obrigatória':'Normal')+'</b><small>'+escHtml(v.alteracoes||'Sem descrição')+'</small></div>'+
-        '<div>'+status+'<small>'+Number(v.liberacao_percentual||0)+'% liberada</small></div>'+
-        '<div><b>'+tamanho.toFixed(1)+' MB</b><small>'+(v.instalacoes_atualizadas||0)+' atualizada(s)</small></div>'+
-        '<div><button class="btn btn-sm" onclick="lmAlterarLiberacao(\''+v.id+'\','+Number(v.liberacao_percentual||0)+')">Liberação</button></div></div>';
-    }).join('');
-  } catch(e) {
-    estado.textContent='● Integração pendente'; estado.style.background='#FFF7ED'; estado.style.color='#C2410C';
-    lista.innerHTML='<div style="padding:18px;color:#9A3412;background:#FFF7ED;border-radius:9px;font-size:12px;">A tela está pronta. A função de publicação ainda precisa ser ativada no Supabase.</div>';
-  }
-}
-
-function lmAbrirPublicacao(){
-  document.getElementById('lm-up-versao').value=''; document.getElementById('lm-up-arquivo').value='';
-  document.getElementById('lm-up-alteracoes').value=''; document.getElementById('lm-up-percentual').value='0';
-  document.getElementById('lm-up-obrigatoria').value='false'; document.getElementById('lm-up-erro').style.display='none';
-  document.getElementById('lm-up-andamento').style.display='none'; document.getElementById('lm-update-modal').style.display='flex';
-}
-function lmFecharPublicacao(){document.getElementById('lm-update-modal').style.display='none';}
-
-async function lmSha256(arquivo){
-  const buffer=await arquivo.arrayBuffer(); const hash=await crypto.subtle.digest('SHA-256',buffer);
-  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-async function lmPublicarVersao(){
-  const versao=document.getElementById('lm-up-versao').value.trim(); const arquivo=document.getElementById('lm-up-arquivo').files[0];
-  const erro=document.getElementById('lm-up-erro'); const box=document.getElementById('lm-up-andamento');
-  const texto=document.getElementById('lm-up-texto'); const barra=document.getElementById('lm-up-barra'); const btn=document.getElementById('lm-up-publicar');
-  erro.style.display='none'; if(!/^\d+\.\d+\.\d+$/.test(versao)||!arquivo){erro.textContent='Informe uma versão no formato 1.0.1 e selecione o instalador.';erro.style.display='block';return;}
-  if(!arquivo.name.toLowerCase().endsWith('.exe')){erro.textContent='Selecione o instalador .exe do Legado Mercado.';erro.style.display='block';return;}
-  btn.disabled=true; box.style.display='block';
-  try {
-    texto.textContent='Calculando assinatura de segurança...';barra.style.width='15%'; const sha256=await lmSha256(arquivo);
-    texto.textContent='Preparando envio privado...';barra.style.width='35%';
-    const prep=await lmAtualizacaoFn('preparar_upload',{versao,arquivo_nome:arquivo.name,tamanho_bytes:arquivo.size,sha256,
-      alteracoes:document.getElementById('lm-up-alteracoes').value.trim(),obrigatoria:document.getElementById('lm-up-obrigatoria').value==='true',
-      liberacao_percentual:Number(document.getElementById('lm-up-percentual').value)});
-    texto.textContent='Enviando instalador...';barra.style.width='60%';
-    const envio=await fetch(prep.upload_url,{method:'PUT',headers:{'Content-Type':'application/octet-stream'},body:arquivo});
-    if(!envio.ok) throw new Error('Falha ao enviar o instalador ao armazenamento privado.');
-    texto.textContent='Conferindo e publicando...';barra.style.width='85%';
-    await lmAtualizacaoFn('concluir_publicacao',{versao_id:prep.versao_id}); barra.style.width='100%';texto.textContent='Atualização publicada com sucesso.';
-    setTimeout(()=>{lmFecharPublicacao();lmAtualizacoesCarregar();},900);
-  }catch(e){erro.textContent=e.message||String(e);erro.style.display='block';box.style.display='none';}finally{btn.disabled=false;}
-}
-
-async function lmAlterarLiberacao(id, atual){
-  const valor=prompt('Percentual de liberação (0 a 100):',atual); if(valor===null)return;
-  const percentual=Number(valor); if(!Number.isInteger(percentual)||percentual<0||percentual>100){alert('Informe um número inteiro de 0 a 100.');return;}
-  try{await lmAtualizacaoFn('alterar_liberacao',{versao_id:id,liberacao_percentual:percentual});lmAtualizacoesCarregar();}catch(e){alert('Erro: '+e.message);}
 }
 
 function escHtml(str) {
