@@ -1196,6 +1196,10 @@
           🚀 Habilitar Marketing IA (campanhas com IA no Meta Ads)
         </label>
         <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;margin-top:8px;">
+          <input type="checkbox" id="loja-usa-gestao-comercial" style="width:auto;margin:0;">
+          🏆 Habilitar Gestão Comercial (metas, comissões e painel do vendedor)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:var(--text);cursor:pointer;margin-top:8px;">
           <input type="checkbox" id="loja-usa-catalogo" style="width:auto;margin:0;" onchange="document.getElementById('loja-catalogo-whats-wrap').style.display=this.checked?'block':'none'">
           🛍️ Habilitar catálogo público (vitrine sem login)
         </label>
@@ -1844,6 +1848,7 @@ function abrirModalEditarLoja(id) {
   document.getElementById('loja-usa-crediario').checked = !!loja.usa_crediario;
   document.getElementById('loja-usa-consignado').checked = !!loja.usa_consignado;
   document.getElementById('loja-usa-marketing').checked = !!loja.usa_marketing;
+  document.getElementById('loja-usa-gestao-comercial').checked = !!loja.usa_gestao_comercial;
   document.getElementById('loja-catalogo-whats').value = loja.catalogo_whatsapp || '';
   document.getElementById('loja-catalogo-whats-wrap').style.display = loja.usa_catalogo ? 'block' : 'none';
   document.getElementById('loja-banner-url').value = loja.catalogo_banner_url || '';
@@ -1951,6 +1956,7 @@ async function salvarLoja() {
     usa_crediario: document.getElementById('loja-usa-crediario').checked,
     usa_consignado: document.getElementById('loja-usa-consignado').checked,
     usa_marketing: document.getElementById('loja-usa-marketing').checked,
+    usa_gestao_comercial: document.getElementById('loja-usa-gestao-comercial').checked,
     catalogo_whatsapp: document.getElementById('loja-catalogo-whats').value.trim(),
     catalogo_banner_url: document.getElementById('loja-banner-url').value || null,
     observacoes: document.getElementById('loja-obs').value.trim(),
