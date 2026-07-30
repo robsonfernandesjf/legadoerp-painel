@@ -1492,6 +1492,7 @@ if (sessionStorage.getItem('admin_logado') === '1') {
   _senhaAdminSessao = sessionStorage.getItem('admin_senha') || '';
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('painel').style.display = 'block';
+  carregarLojas();
 }
 
 // Helper para chamar a Edge Function do painel (criar/excluir loja, licenças)
