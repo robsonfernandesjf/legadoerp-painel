@@ -856,7 +856,7 @@
     #painel tbody tr { background: #FFFFFF; }
   }
 
-  /* ── NAV SEÇÕES (Legado ERP / Legado Mercado) ── */
+  /* ── NAV SEÇÕES E VISÃO CONSOLIDADA ── */
   .secao-nav {
     display: flex; gap: 6px; margin-bottom: 24px;
     border-bottom: 2px solid var(--border); padding-bottom: 0;
@@ -879,6 +879,12 @@
   .lm-badge-vence   { background:#FEF3E7; color:#F2994A; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
   .lm-badge-vencido { background:#FDECEC; color:#E0383E; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
   .lm-badge-inativo { background:#F3F4F6; color:#6B7280; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
+  .geral-produtos { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:24px; }
+  .geral-produto { background:#fff; border:1px solid var(--border); border-radius:18px; padding:20px; box-shadow:0 9px 25px rgba(15,23,42,.06); }
+  .geral-produto h3 { margin:0 0 14px; font-size:15px; }
+  .geral-linha { display:flex; justify-content:space-between; padding:7px 0; border-top:1px solid #EEF2F6; font-size:12px; }
+  .geral-linha strong { font-size:13px; }
+  @media(max-width:850px){.geral-produtos{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -987,10 +993,20 @@
 
     <div id="secao-nav" style="display:none;">
       <div class="secao-nav">
-        <button class="secao-nav-btn ativa" id="nav-erp" onclick="trocarSecao('erp')">🏪 Legado ERP</button>
+        <button class="secao-nav-btn ativa" id="nav-geral" onclick="trocarSecao('geral')">📊 Visão Geral</button>
+        <button class="secao-nav-btn" id="nav-erp" onclick="trocarSecao('erp')">🏪 Legado ERP</button>
         <button class="secao-nav-btn" id="nav-mercado" onclick="trocarSecao('mercado')">🛒 Legado Mercado</button>
         <a class="secao-nav-btn" href="recicly.html" style="text-decoration:none;">♻️ Legado Recicly</a>
       </div>
+    </div>
+
+    <div id="geral-painel" style="display:none;">
+      <div class="cards-resumo" id="geral-cards"></div>
+      <div class="chart-section">
+        <h2>Novos clientes por mês — todos os produtos</h2>
+        <canvas id="chart-geral" height="90"></canvas>
+      </div>
+      <div class="geral-produtos" id="geral-produtos"></div>
     </div>
 
     <div id="conteudo" style="display:none;">
@@ -1096,12 +1112,15 @@
     <!-- ══ LEGADO MERCADO ══ -->
     <div id="lm-painel" style="display:none;">
 
-      <div class="lm-cards" id="lm-cards-resumo">
-        <div class="lm-card"><div class="lv" id="lm-total">—</div><div class="ll">Total de clientes</div></div>
-        <div class="lm-card"><div class="lv" id="lm-ativos" style="color:#16A34A;">—</div><div class="ll">Licenças ativas</div></div>
-        <div class="lm-card"><div class="lv" id="lm-vencendo" style="color:#F2994A;">—</div><div class="ll">Vencem em 7 dias</div></div>
-        <div class="lm-card"><div class="lv" id="lm-vencidos" style="color:#E0383E;">—</div><div class="ll">Vencidas / inativas</div></div>
+      <div class="cards-resumo" id="lm-cards-resumo">
+        <div class="card-resumo card-c1"><div class="icon">🛒</div><div class="value" id="lm-total">—</div><div class="label">Clientes totais</div></div>
+        <div class="card-resumo card-c2"><div class="icon">⌛</div><div class="value" id="lm-vencendo">—</div><div class="label">Vencem em 7 dias</div></div>
+        <div class="card-resumo card-c3"><div class="icon">✅</div><div class="value" id="lm-ativos">—</div><div class="label">Licenças ativas</div></div>
+        <div class="card-resumo card-c4"><div class="icon">⚠️</div><div class="value" id="lm-vencidos">—</div><div class="label">Vencidas / inativas</div></div>
+        <div class="card-resumo card-c5"><div class="icon">📈</div><div class="value" id="lm-mrr">R$ 0,00</div><div class="label">MRR (receita mensal)</div></div>
+        <div class="card-resumo card-c6"><div class="icon">🔑</div><div class="value" id="lm-regulares">—</div><div class="label">Regulares</div></div>
       </div>
+      <div class="chart-section"><h2>Novos clientes Mercado por mês</h2><canvas id="chart-lm" height="90"></canvas></div>
 
       <div class="section-card">
         <div class="section-card-header">
@@ -1118,6 +1137,7 @@
               <th>Chave</th>
               <th>Validade</th>
               <th>Status</th>
+              <th>Mensalidade</th>
               <th>Obs</th>
               <th>Ações</th>
             </tr>
@@ -1428,6 +1448,10 @@
       <input type="date" id="lm-validade" style="width:100%;">
     </div>
     <div class="form-row">
+      <label>Valor mensal (R$)</label>
+      <input type="number" id="lm-valor-mensal" min="0" step="0.01" placeholder="Ex.: 99,90" style="width:100%;">
+    </div>
+    <div class="form-row">
       <label>Ativo</label>
       <select id="lm-ativo" style="width:100%;">
         <option value="true">Sim</option>
@@ -1561,6 +1585,9 @@ async function carregarLojas() {
     document.getElementById('loading').style.display  = 'none';
     document.getElementById('conteudo').style.display = 'block';
     document.getElementById('secao-nav').style.display = 'block';
+    await carregarVisaoGeral();
+    const secaoInicial=location.hash==='#mercado'?'mercado':(sessionStorage.getItem('painel_secao')||'geral');
+    trocarSecao(['geral','erp','mercado'].includes(secaoInicial)?secaoInicial:'geral');
   } catch (e) {
     document.getElementById('loading').innerHTML = `<span style="color:var(--danger)">Erro ao carregar: ${e.message}</span>`;
   }
@@ -2308,24 +2335,26 @@ async function carregarPreviewCST() {
 // LEGADO MERCADO — gestão de licenças
 // =====================================================================
 let _lmLicencas = [];
+let _lrLicencas = [];
+let _lrInstalacoes = [];
+let _chartGeral = null;
+let _chartLm = null;
 
 function trocarSecao(secao) {
+  const geral   = document.getElementById('geral-painel');
   const erp     = document.getElementById('conteudo');
   const mercado = document.getElementById('lm-painel');
+  const btnGeral= document.getElementById('nav-geral');
   const btnErp  = document.getElementById('nav-erp');
   const btnMerc = document.getElementById('nav-mercado');
-  if (secao === 'erp') {
-    erp.style.display     = 'block';
-    mercado.style.display = 'none';
-    btnErp.classList.add('ativa');
-    btnMerc.classList.remove('ativa');
-  } else {
-    erp.style.display     = 'none';
-    mercado.style.display = 'block';
-    btnErp.classList.remove('ativa');
-    btnMerc.classList.add('ativa');
-    lmCarregar();
-  }
+  geral.style.display=secao==='geral'?'block':'none';
+  erp.style.display=secao==='erp'?'block':'none';
+  mercado.style.display=secao==='mercado'?'block':'none';
+  btnGeral.classList.toggle('ativa',secao==='geral');
+  btnErp.classList.toggle('ativa',secao==='erp');
+  btnMerc.classList.toggle('ativa',secao==='mercado');
+  sessionStorage.setItem('painel_secao',secao);
+  if(secao==='mercado')lmCarregar();
 }
 
 async function lmCarregar() {
@@ -2333,6 +2362,7 @@ async function lmCarregar() {
     _lmLicencas = await sbGet('lm_licencas', 'order=criado_em.desc');
     lmRenderizar(_lmLicencas);
     lmAtualizarCards(_lmLicencas);
+    renderLmChart(_lmLicencas);
   } catch(e) {
     console.error('Legado Mercado:', e);
   }
@@ -2350,19 +2380,75 @@ function lmStatus(lic) {
 
 function lmAtualizarCards(lista) {
   const hoje   = new Date(); hoje.setHours(0,0,0,0);
-  let ativos=0, vencendo=0, vencidos=0;
+  let ativos=0, vencendo=0, vencidos=0, mrr=0;
   lista.forEach(function(l) {
     if (!l.ativo) { vencidos++; return; }
     const valid = new Date(l.validade+'T00:00:00');
     const diff  = Math.ceil((valid - hoje) / 86400000);
     if (diff < 0)       vencidos++;
-    else if (diff <= 7) vencendo++;
+    else if (diff <= 7) { vencendo++; ativos++; }
     else                ativos++;
+    if(diff>=0)mrr+=Number(l.valor_mensal||0);
   });
   document.getElementById('lm-total').textContent   = lista.length;
   document.getElementById('lm-ativos').textContent  = ativos;
   document.getElementById('lm-vencendo').textContent= vencendo;
   document.getElementById('lm-vencidos').textContent = vencidos;
+  document.getElementById('lm-mrr').textContent=mrr.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  document.getElementById('lm-regulares').textContent=Math.max(0,ativos-vencendo);
+}
+
+function renderLmChart(lista){
+  const canvas=document.getElementById('chart-lm');if(!canvas||typeof Chart==='undefined')return;
+  const meses=[],valores=[],hoje=new Date();
+  for(let i=5;i>=0;i--){const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);meses.push(d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''));valores.push(lista.filter(x=>{const c=new Date(x.criado_em||0);return c.getFullYear()===d.getFullYear()&&c.getMonth()===d.getMonth()}).length)}
+  if(_chartLm)_chartLm.destroy();
+  _chartLm=new Chart(canvas,{type:'bar',data:{labels:meses,datasets:[{data:valores,backgroundColor:'#5B4BE8',borderRadius:5,maxBarThickness:48}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}},x:{grid:{display:false}}}}});
+}
+
+async function carregarVisaoGeral(){
+  try{
+    const [mercado,recicly]=await Promise.all([
+      sbGet('lm_licencas','order=criado_em.desc'),
+      fetch(`${SB_URL}/functions/v1/lr-admin-plataforma`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify({acao:'listar',senha_admin:_senhaAdminSessao})}).then(async r=>{const b=await r.json();if(!r.ok)throw Error(b.erro||'Falha no Recicly');return b})
+    ]);
+    _lmLicencas=mercado||[];_lrLicencas=recicly.licencas||[];_lrInstalacoes=recicly.instalacoes||[];
+    renderVisaoGeral();
+  }catch(e){console.error('Visão Geral:',e);renderVisaoGeral()}
+}
+
+function resumoLicencas(lista,diasAviso){
+  const hoje=new Date();hoje.setHours(0,0,0,0);let ativas=0,vencendo=0,vencidas=0,mrr=0;
+  lista.forEach(x=>{const d=new Date(x.validade+'T12:00:00'),dias=Math.ceil((d-hoje)/86400000);if(!x.ativo||dias<0)vencidas++;else{ativas++;mrr+=Number(x.valor_mensal||0);if(dias<=diasAviso)vencendo++}});
+  return{total:lista.length,ativas,vencendo,vencidas,mrr};
+}
+
+function renderVisaoGeral(){
+  const erpTotal=_lojas.length,erpAtivas=_lojas.filter(x=>x.ativa).length;
+  const erpMrr=_lojas.filter(x=>x.ativa&&!x.isenta).reduce((s,x)=>s+Number(x.valor_mensal||0),0);
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const erpVencidas=_lojas.filter(x=>!x.ativa||(!x.isenta&&statusLicenca(x.id).classe==='badge-vencida')).length;
+  const erpVencendo=_lojas.filter(x=>{const lic=_licencas[x.id];if(!x.ativa||x.isenta||!lic?.validade)return false;const dias=Math.ceil((new Date(lic.validade+'T12:00:00')-hoje)/86400000);return dias>=0&&dias<=5}).length;
+  const lm=resumoLicencas(_lmLicencas,7),lr=resumoLicencas(_lrLicencas,5);
+  const total=erpTotal+lm.total+lr.total,ativas=erpAtivas+lm.ativas+lr.ativas,vencidas=erpVencidas+lm.vencidas+lr.vencidas,mrr=erpMrr+lm.mrr+lr.mrr;
+  document.getElementById('geral-cards').innerHTML=`
+    <div class="card-resumo card-c1"><div class="icon">🏢</div><div class="value">${total}</div><div class="label">Clientes totais</div></div>
+    <div class="card-resumo card-c2"><div class="icon">⌛</div><div class="value">${erpVencendo+lm.vencendo+lr.vencendo}</div><div class="label">Próximos do vencimento</div></div>
+    <div class="card-resumo card-c3"><div class="icon">✅</div><div class="value">${ativas}</div><div class="label">Licenças ativas</div></div>
+    <div class="card-resumo card-c4"><div class="icon">⚠️</div><div class="value">${vencidas}</div><div class="label">Vencidas / inativas</div></div>
+    <div class="card-resumo card-c5"><div class="icon">📈</div><div class="value">${mrr.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div><div class="label">MRR consolidado</div></div>
+    <div class="card-resumo card-c6"><div class="icon">🧩</div><div class="value">3</div><div class="label">Produtos Legado</div></div>`;
+  const produto=(nome,icone,r,extra)=>`<article class="geral-produto"><h3>${icone} ${nome}</h3><div class="geral-linha"><span>Clientes</span><strong>${r.total}</strong></div><div class="geral-linha"><span>Ativos</span><strong>${r.ativas}</strong></div><div class="geral-linha"><span>Vencidos / inativos</span><strong>${r.vencidas}</strong></div><div class="geral-linha"><span>Faturamento mensal</span><strong>${r.mrr.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</strong></div>${extra||''}</article>`;
+  document.getElementById('geral-produtos').innerHTML=produto('Legado ERP','🏪',{total:erpTotal,ativas:erpAtivas,vencidas:erpVencidas,mrr:erpMrr})+produto('Legado Mercado','🛒',lm)+produto('Legado Recicly','♻️',lr,`<div class="geral-linha"><span>Instalações</span><strong>${_lrInstalacoes.length}</strong></div>`);
+  renderChartGeral();
+}
+
+function renderChartGeral(){
+  const canvas=document.getElementById('chart-geral');if(!canvas||typeof Chart==='undefined')return;
+  const todos=[..._lojas.map(x=>x.created_at),..._lmLicencas.map(x=>x.criado_em),..._lrLicencas.map(x=>x.criado_em)].filter(Boolean),labels=[],values=[],hoje=new Date();
+  for(let i=5;i>=0;i--){const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);labels.push(d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''));values.push(todos.filter(x=>{const c=new Date(x);return c.getFullYear()===d.getFullYear()&&c.getMonth()===d.getMonth()}).length)}
+  if(_chartGeral)_chartGeral.destroy();
+  _chartGeral=new Chart(canvas,{type:'bar',data:{labels,datasets:[{data:values,backgroundColor:'#5B4BE8',borderRadius:5,maxBarThickness:48}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}},x:{grid:{display:false}}}}});
 }
 
 function lmRenderizar(lista) {
@@ -2378,6 +2464,7 @@ function lmRenderizar(lista) {
       +'<td><code style="font-size:11px;background:#F3F4F6;padding:2px 7px;border-radius:5px;">'+escHtml(l.chave)+'</code></td>'
       +'<td>'+val+'</td>'
       +'<td><span class="'+st.cls+'">'+st.label+'</span></td>'
+      +'<td style="font-weight:700;color:#087AF0;">'+Number(l.valor_mensal||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})+'</td>'
       +'<td style="color:var(--muted);font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(l.obs||'—')+'</td>'
       +'<td style="white-space:nowrap;">'
         +'<button class="btn btn-sm" onclick="lmRenovar(\''+l.id+'\',\''+l.validade+'\')" title="Renovar +30 dias">+30d</button> '
@@ -2407,6 +2494,7 @@ function lmAbrirNovo() {
   document.getElementById('lm-id').value     = '';
   document.getElementById('lm-nome').value   = '';
   document.getElementById('lm-obs').value    = '';
+  document.getElementById('lm-valor-mensal').value = '0';
   document.getElementById('lm-ativo').value  = 'true';
   document.getElementById('lm-modal-erro').style.display = 'none';
   // Validade padrão: hoje + 30 dias
@@ -2424,6 +2512,7 @@ function lmEditar(id) {
   document.getElementById('lm-nome').value    = l.cliente_nome;
   document.getElementById('lm-chave').value   = l.chave;
   document.getElementById('lm-validade').value= l.validade;
+  document.getElementById('lm-valor-mensal').value= l.valor_mensal || 0;
   document.getElementById('lm-ativo').value   = l.ativo ? 'true' : 'false';
   document.getElementById('lm-obs').value     = l.obs || '';
   document.getElementById('lm-modal-erro').style.display = 'none';
@@ -2440,15 +2529,16 @@ async function lmSalvar() {
   const chave  = document.getElementById('lm-chave').value.trim();
   const valid  = document.getElementById('lm-validade').value;
   const ativo  = document.getElementById('lm-ativo').value === 'true';
+  const valorMensal = Math.max(0,Number(document.getElementById('lm-valor-mensal').value||0));
   const obs    = document.getElementById('lm-obs').value.trim();
   const erroEl = document.getElementById('lm-modal-erro');
   erroEl.style.display='none';
   if (!nome || !chave || !valid) { erroEl.textContent='Preencha nome, chave e validade.'; erroEl.style.display='block'; return; }
   try {
     if (id) {
-      await sbPatch('lm_licencas','id=eq.'+id,{cliente_nome:nome,validade:valid,ativo:ativo,obs:obs||null});
+      await sbPatch('lm_licencas','id=eq.'+id,{cliente_nome:nome,validade:valid,ativo:ativo,valor_mensal:valorMensal,obs:obs||null});
     } else {
-      await sbPost('lm_licencas',{cliente_nome:nome,chave:chave,validade:valid,ativo:ativo,obs:obs||null});
+      await sbPost('lm_licencas',{cliente_nome:nome,chave:chave,validade:valid,ativo:ativo,valor_mensal:valorMensal,obs:obs||null});
     }
     lmFecharModal();
     lmCarregar();
