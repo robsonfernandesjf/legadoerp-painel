@@ -997,7 +997,7 @@
         <button class="secao-nav-btn" id="nav-erp" onclick="trocarSecao('erp')">🏪 Legado ERP</button>
         <button class="secao-nav-btn" id="nav-mercado" onclick="trocarSecao('mercado')">🛒 Legado Mercado</button>
         <a class="secao-nav-btn" href="recicly.html" style="text-decoration:none;">♻️ Legado Recicly</a>
-        <a class="secao-nav-btn" href="beutifou.html" style="text-decoration:none;">✦ BEUTIFOU</a>
+        <a class="secao-nav-btn" href="beutifou.html" style="text-decoration:none;">✦ Legado BEUTIFOU</a>
       </div>
     </div>
 
@@ -1595,7 +1595,8 @@ async function carregarLojas() {
     document.getElementById('conteudo').style.display = 'block';
     document.getElementById('secao-nav').style.display = 'block';
     await carregarVisaoGeral();
-    const secaoInicial=location.hash==='#mercado'?'mercado':(sessionStorage.getItem('painel_secao')||'geral');
+    const secaoHash=location.hash.replace('#','');
+    const secaoInicial=['geral','erp','mercado'].includes(secaoHash)?secaoHash:(sessionStorage.getItem('painel_secao')||'geral');
     trocarSecao(['geral','erp','mercado'].includes(secaoInicial)?secaoInicial:'geral');
   } catch (e) {
     document.getElementById('loading').innerHTML = `<span style="color:var(--danger)">Erro ao carregar: ${e.message}</span>`;
@@ -2345,6 +2346,7 @@ async function carregarPreviewCST() {
 // =====================================================================
 let _lmLicencas = [];
 let _lrLicencas = [];
+let _lbTenants = [];
 let _lrInstalacoes = [];
 let _chartGeral = null;
 let _chartLm = null;
@@ -2417,11 +2419,12 @@ function renderLmChart(lista){
 
 async function carregarVisaoGeral(){
   try{
-    const [mercado,recicly]=await Promise.all([
+    const [mercado,recicly,beutifou]=await Promise.all([
       sbGet('lm_licencas','order=criado_em.desc'),
-      fetch(`${SB_URL}/functions/v1/lr-admin-plataforma`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify({acao:'listar',senha_admin:_senhaAdminSessao})}).then(async r=>{const b=await r.json();if(!r.ok)throw Error(b.erro||'Falha no Recicly');return b})
+      fetch(`${SB_URL}/functions/v1/lr-admin-plataforma`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify({acao:'listar',senha_admin:_senhaAdminSessao})}).then(async r=>{const b=await r.json();if(!r.ok)throw Error(b.erro||'Falha no Recicly');return b}),
+      fetch(`${SB_URL}/functions/v1/lb-admin-beutifou`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify({action:'list',senha_admin:_senhaAdminSessao})}).then(async r=>{const b=await r.json();if(!r.ok)throw Error(b.error||'Falha no BEUTIFOU');return b})
     ]);
-    _lmLicencas=mercado||[];_lrLicencas=recicly.licencas||[];_lrInstalacoes=recicly.instalacoes||[];
+    _lmLicencas=mercado||[];_lrLicencas=recicly.licencas||[];_lrInstalacoes=recicly.instalacoes||[];_lbTenants=beutifou.rows||[];
     renderVisaoGeral();
   }catch(e){console.error('Visão Geral:',e);renderVisaoGeral()}
 }
@@ -2439,22 +2442,23 @@ function renderVisaoGeral(){
   const erpVencidas=_lojas.filter(x=>!x.ativa||(!x.isenta&&statusLicenca(x.id).classe==='badge-vencida')).length;
   const erpVencendo=_lojas.filter(x=>{const lic=_licencas[x.id];if(!x.ativa||x.isenta||!lic?.validade)return false;const dias=Math.ceil((new Date(lic.validade+'T12:00:00')-hoje)/86400000);return dias>=0&&dias<=5}).length;
   const lm=resumoLicencas(_lmLicencas,7),lr=resumoLicencas(_lrLicencas,5);
-  const total=erpTotal+lm.total+lr.total,ativas=erpAtivas+lm.ativas+lr.ativas,vencidas=erpVencidas+lm.vencidas+lr.vencidas,mrr=erpMrr+lm.mrr+lr.mrr;
+  const lb={total:_lbTenants.length,ativas:_lbTenants.filter(x=>x.status==='active').length,vencidas:_lbTenants.filter(x=>['suspended','cancelled','past_due'].includes(x.status)).length,mrr:0,isentas:0};
+  const total=erpTotal+lm.total+lr.total+lb.total,ativas=erpAtivas+lm.ativas+lr.ativas+lb.ativas,vencidas=erpVencidas+lm.vencidas+lr.vencidas+lb.vencidas,mrr=erpMrr+lm.mrr+lr.mrr;
   document.getElementById('geral-cards').innerHTML=`
     <div class="card-resumo card-c1"><div class="icon">🏢</div><div class="value">${total}</div><div class="label">Clientes totais</div></div>
     <div class="card-resumo card-c2"><div class="icon">⌛</div><div class="value">${erpVencendo+lm.vencendo+lr.vencendo}</div><div class="label">Próximos do vencimento</div></div>
     <div class="card-resumo card-c3"><div class="icon">✅</div><div class="value">${ativas}</div><div class="label">Licenças ativas</div></div>
     <div class="card-resumo card-c4"><div class="icon">⚠️</div><div class="value">${vencidas}</div><div class="label">Vencidas / inativas</div></div>
     <div class="card-resumo card-c5"><div class="icon">📈</div><div class="value">${mrr.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div><div class="label">MRR consolidado</div></div>
-    <div class="card-resumo card-c6"><div class="icon">🧩</div><div class="value">3</div><div class="label">Produtos Legado</div></div>`;
+    <div class="card-resumo card-c6"><div class="icon">🧩</div><div class="value">4</div><div class="label">Produtos Legado</div></div>`;
   const produto=(nome,icone,r,extra)=>`<article class="geral-produto"><h3>${icone} ${nome}</h3><div class="geral-linha"><span>Clientes</span><strong>${r.total}</strong></div><div class="geral-linha"><span>Ativos</span><strong>${r.ativas}</strong></div><div class="geral-linha"><span>Isentos (free)</span><strong>${r.isentas||0}</strong></div><div class="geral-linha"><span>Vencidos / inativos</span><strong>${r.vencidas}</strong></div><div class="geral-linha"><span>Faturamento mensal</span><strong>${r.mrr.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</strong></div>${extra||''}</article>`;
-  document.getElementById('geral-produtos').innerHTML=produto('Legado ERP','🏪',{total:erpTotal,ativas:erpAtivas,vencidas:erpVencidas,mrr:erpMrr,isentas:_lojas.filter(x=>x.isenta).length})+produto('Legado Mercado','🛒',lm)+produto('Legado Recicly','♻️',lr,`<div class="geral-linha"><span>Instalações</span><strong>${_lrInstalacoes.length}</strong></div>`);
+  document.getElementById('geral-produtos').innerHTML=produto('Legado ERP','🏪',{total:erpTotal,ativas:erpAtivas,vencidas:erpVencidas,mrr:erpMrr,isentas:_lojas.filter(x=>x.isenta).length})+produto('Legado Mercado','🛒',lm)+produto('Legado Recicly','♻️',lr,`<div class="geral-linha"><span>Instalações</span><strong>${_lrInstalacoes.length}</strong></div>`)+produto('Legado BEUTIFOU','✦',lb,`<div class="geral-linha"><span>Modelo</span><strong>SaaS por estabelecimento</strong></div>`);
   renderChartGeral();
 }
 
 function renderChartGeral(){
   const canvas=document.getElementById('chart-geral');if(!canvas||typeof Chart==='undefined')return;
-  const todos=[..._lojas.map(x=>x.created_at),..._lmLicencas.map(x=>x.criado_em),..._lrLicencas.map(x=>x.criado_em)].filter(Boolean),labels=[],values=[],hoje=new Date();
+  const todos=[..._lojas.map(x=>x.created_at),..._lmLicencas.map(x=>x.criado_em),..._lrLicencas.map(x=>x.criado_em),..._lbTenants.map(x=>x.created_at)].filter(Boolean),labels=[],values=[],hoje=new Date();
   for(let i=5;i>=0;i--){const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);labels.push(d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''));values.push(todos.filter(x=>{const c=new Date(x);return c.getFullYear()===d.getFullYear()&&c.getMonth()===d.getMonth()}).length)}
   if(_chartGeral)_chartGeral.destroy();
   _chartGeral=new Chart(canvas,{type:'bar',data:{labels,datasets:[{data:values,backgroundColor:'#5B4BE8',borderRadius:5,maxBarThickness:48}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}},x:{grid:{display:false}}}}});
